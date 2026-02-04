@@ -1,0 +1,64 @@
+.sign-page-container {
+  max-width: 350px;
+  margin: 60px auto;
+  padding: 2rem 2.5rem;
+  background: rgba(30, 32, 40, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 0 24px #00fff7, 0 0 4px #ff00ea;
+  color: #fff;
+  font-family: 'Orbitron', 'Segoe UI', Arial, sans-serif;
+}
+
+.sign-page-container h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  letter-spacing: 2px;
+  color: #00fff7;
+  text-shadow: 0 0 8px #ff00ea;
+}
+
+.sign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.sign-form label {
+  font-size: 1rem;
+  color: #ff00ea;
+  margin-bottom: 0.3rem;
+}
+
+.sign-form input {
+  padding: 0.7rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #181a20;
+  color: #fff;
+  font-size: 1rem;
+  outline: 2px solid #00fff7;
+  transition: outline 0.2s;
+}
+
+.sign-form input:focus {
+  outline: 2px solid #ff00ea;
+}
+
+.sign-form button {
+  margin-top: 0.5rem;
+  padding: 0.8rem 0;
+  background: linear-gradient(90deg, #00fff7 0%, #ff00ea 100%);
+  color: #181a20;
+  font-weight: bold;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #00fff7, 0 0 2px #ff00ea;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sign-form button:hover {
+  background: linear-gradient(90deg, #ff00ea 0%, #00fff7 100%);
+  color: #fff;
+}

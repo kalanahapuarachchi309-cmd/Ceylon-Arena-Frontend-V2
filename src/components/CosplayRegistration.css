@@ -1,0 +1,640 @@
+/* ==========================================================================
+   COSPLAY REGISTRATION — Cyberpunk cinematic, matches HomePage palette
+   ========================================================================== */
+
+/* ─── Re-use root variables from HomePage ─── */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+
+/* ── Page shell ── */
+.cosplay-page {
+  min-height: 100vh;
+  background: var(--deep-black, #060a14);
+  font-family: 'Rajdhani', 'Segoe UI', sans-serif;
+  color: var(--text-body, #b8c8d8);
+  position: relative;
+  overflow-x: hidden;
+  /* ── COLOUR ANIMATION: slow hue-shift overlay ── */
+  animation: page-colour-cycle 12s ease-in-out infinite alternate;
+}
+@keyframes page-colour-cycle {
+  0%   { background-color: #060a14; box-shadow: inset 0 0 200px rgba(255,45,120,0.07);  }
+  25%  { background-color: #07051a; box-shadow: inset 0 0 200px rgba(180,77,255,0.09);  }
+  50%  { background-color: #03110f; box-shadow: inset 0 0 200px rgba(0,255,255,0.07);   }
+  75%  { background-color: #100614; box-shadow: inset 0 0 200px rgba(255,0,255,0.08);   }
+  100% { background-color: #060a14; box-shadow: inset 0 0 200px rgba(255,45,120,0.07);  }
+}
+
+/* ==========================================================================
+   COLOUR ANIMATION — nav border & title accent hue-rotate
+   ========================================================================== */
+.cosplay-nav {
+  animation: nav-colour-shift 8s linear infinite;
+}
+@keyframes nav-colour-shift {
+  0%   { border-bottom-color: rgba(0,255,255,0.10); }
+  33%  { border-bottom-color: rgba(255,45,120,0.18); }
+  66%  { border-bottom-color: rgba(180,77,255,0.18); }
+  100% { border-bottom-color: rgba(0,255,255,0.10); }
+}
+
+/* ==========================================================================
+   PULSER RINGS — 3 radial rings emanating from page centre
+   ========================================================================== */
+.cosplay-pulsers {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.cosplay-pulser {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid;
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  animation: pulser-expand 5s ease-out infinite;
+}
+.cosplay-pulser.p1 {
+  width: 600px; height: 600px;
+  top: 50%; left: 50%;
+  border-color: rgba(255,45,120,0.35);
+  animation-delay: 0s;
+}
+.cosplay-pulser.p2 {
+  width: 900px; height: 900px;
+  top: 50%; left: 50%;
+  border-color: rgba(0,255,255,0.25);
+  animation-delay: 1.6s;
+}
+.cosplay-pulser.p3 {
+  width: 1200px; height: 1200px;
+  top: 50%; left: 50%;
+  border-color: rgba(180,77,255,0.20);
+  animation-delay: 3.2s;
+}
+@keyframes pulser-expand {
+  0%   { transform: translate(-50%,-50%) scale(0.05); opacity: 0.9; }
+  70%  { opacity: 0.25; }
+  100% { transform: translate(-50%,-50%) scale(1);    opacity: 0; }
+}
+
+/* ==========================================================================
+   THUNDER BOLTS — 5 lightning bolts that flash at random positions
+   ========================================================================== */
+.cosplay-thunders {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.cosplay-thunder {
+  position: absolute;
+  width: 28px;
+  opacity: 0;
+  filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 18px currentColor);
+  animation: thunder-flash 6s ease-in-out infinite;
+}
+/* positions + colours per bolt */
+.cosplay-thunder.t1 { top:  8%; left:  7%; color: var(--neon-cyan,  #00ffff); animation-delay: 0s;    animation-duration: 5.0s; }
+.cosplay-thunder.t2 { top: 15%; right: 9%; color: var(--neon-pink,  #ff2d78); animation-delay: 1.4s;  animation-duration: 6.5s; }
+.cosplay-thunder.t3 { top: 55%; left:  3%; color: var(--neon-purple,#b44dff); animation-delay: 2.8s;  animation-duration: 4.5s; }
+.cosplay-thunder.t4 { top: 65%; right: 5%; color: var(--neon-cyan,  #00ffff); animation-delay: 0.7s;  animation-duration: 7.0s; }
+.cosplay-thunder.t5 { top: 35%; left: 48%; color: var(--neon-pink,  #ff2d78); animation-delay: 3.5s;  animation-duration: 5.5s; }
+
+@keyframes thunder-flash {
+  0%    { opacity: 0;    transform: scaleY(0.6) skewX(-8deg); }
+  3%    { opacity: 1;    transform: scaleY(1.2) skewX(-12deg); }
+  6%    { opacity: 0.15; transform: scaleY(0.9) skewX(-6deg);  }
+  9%    { opacity: 0.9;  transform: scaleY(1.1) skewX(-10deg); }
+  14%   { opacity: 0;    transform: scaleY(1)   skewX(-8deg);  }
+  100%  { opacity: 0; }
+}
+
+/* ── Floating micro-particles ── */
+.cosplay-particles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.cosplay-particle {
+  position: absolute;
+  left: var(--x, 50%);
+  bottom: -10px;
+  width: var(--size, 3px);
+  height: var(--size, 3px);
+  border-radius: 50%;
+  background: var(--neon-cyan, #00ffff);
+  opacity: 0;
+  animation: particle-rise 6s ease-in var(--delay, 0s) infinite;
+}
+.cosplay-particle:nth-child(3n)   { background: var(--neon-pink, #ff2d78); }
+.cosplay-particle:nth-child(5n)   { background: var(--neon-purple, #b44dff); }
+@keyframes particle-rise {
+  0%   { transform: translateY(0)      scale(1);   opacity: 0; }
+  10%  { opacity: 0.8; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-100vh) scale(0.4); opacity: 0; }
+}
+
+/* ── Scanlines ── */
+.cosplay-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.06) 3px,
+    rgba(0, 0, 0, 0.06) 4px
+  );
+}
+
+/* ── Nav ── */
+.cosplay-nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.10);
+  background: rgba(6, 10, 20, 0.75);
+  backdrop-filter: blur(10px);
+}
+.cosplay-nav-logo {
+  height: 48px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 8px rgba(0,255,255,0.40));
+}
+.cosplay-back-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 2px;
+}
+
+/* ── Main wrapper — single viewport, two-column ── */
+.cosplay-main {
+  position: relative;
+  z-index: 5;
+  height: calc(100vh - 89px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48px;
+}
+
+/* Two-column grid */
+.cosplay-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 56px;
+  align-items: center;
+  width: 100%;
+  max-width: 1280px;
+}
+
+/* LEFT — branding column */
+.cosplay-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* RIGHT — form column */
+.cosplay-right {
+  display: flex;
+  flex-direction: column;
+}
+.cosplay-sub-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 4px;
+  color: var(--neon-cyan, #00ffff);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  opacity: 0.8;
+  animation: label-pulse 2.5s ease-in-out infinite alternate;
+}
+@keyframes label-pulse {
+  from { opacity: 0.5; letter-spacing: 4px; }
+  to   { opacity: 1.0; letter-spacing: 5px; }
+}
+
+.cosplay-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(2rem, 6vw, 4rem);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  color: #fff;
+  margin: 0 0 12px;
+  position: relative;
+  display: inline-block;
+  animation: title-fadein 0.8s ease both;
+}
+@keyframes title-fadein {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+.cosplay-title-accent {
+  background: linear-gradient(90deg, var(--neon-pink, #ff2d78), var(--neon-magenta, #ff00ff), var(--neon-cyan, #00ffff));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 3s linear infinite;
+}
+@keyframes shimmer-text {
+  0%   { background-position: 0%   center; }
+  100% { background-position: 200% center; }
+}
+
+/* Glitch effect on title */
+.cosplay-title.glitch {
+  animation: glitch-shake 0.32s steps(2) both;
+}
+.cosplay-title.glitch::before,
+.cosplay-title.glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cosplay-title.glitch::before {
+  color: var(--neon-cyan, #00ffff);
+  clip-path: polygon(0 20%, 100% 20%, 100% 40%, 0 40%);
+  transform: translate(-3px, 1px);
+  opacity: 0.7;
+}
+.cosplay-title.glitch::after {
+  color: var(--neon-pink, #ff2d78);
+  clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+  transform: translate(3px, -1px);
+  opacity: 0.7;
+}
+@keyframes glitch-shake {
+  0%   { transform: translate(0, 0);    }
+  25%  { transform: translate(-4px, 1px); }
+  50%  { transform: translate(4px, -1px); }
+  75%  { transform: translate(-2px, 2px); }
+  100% { transform: translate(0, 0);    }
+}
+
+.cosplay-tagline {
+  font-size: 0.9rem;
+  letter-spacing: 2px;
+  color: var(--text-dim, rgba(184,200,220,0.55));
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  line-height: 1.7;
+}
+
+/* Perks list */
+.cosplay-perks {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cosplay-perks li {
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 0.92rem;
+  letter-spacing: 1.5px;
+  color: var(--text-body, #b8c8d8);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.perk-icon {
+  font-size: 1rem;
+  filter: drop-shadow(0 0 6px rgba(0,255,255,0.6));
+}
+
+/* neon divider */
+.cosplay-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.cosplay-divider span {
+  flex: 1;
+  max-width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan, #00ffff), transparent);
+  animation: divider-glow 2s ease-in-out infinite alternate;
+}
+.cosplay-divider-gem {
+  flex: 0 !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  background: var(--neon-pink, #ff2d78);
+  box-shadow: 0 0 10px var(--neon-pink, #ff2d78);
+  animation: gem-spin 4s linear infinite;
+}
+@keyframes divider-glow {
+  from { opacity: 0.4; }
+  to   { opacity: 1.0; }
+}
+@keyframes gem-spin {
+  from { transform: rotate(45deg); }
+  to   { transform: rotate(405deg); }
+}
+
+/* Name + Age side by side */
+.cosplay-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Form ── */
+.cosplay-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: form-fadein 0.7s 0.2s ease both;
+}
+@keyframes form-fadein {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── Field ── */
+.cosplay-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cosplay-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 3px;
+  color: var(--neon-cyan, #00ffff);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.cosplay-label-num {
+  font-size: 0.65rem;
+  color: var(--neon-pink, #ff2d78);
+  opacity: 0.8;
+}
+
+.cosplay-input-wrap {
+  position: relative;
+}
+.cosplay-input {
+  width: 100%;
+  background: rgba(10, 14, 26, 0.70);
+  border: 1px solid rgba(0, 255, 255, 0.20);
+  border-radius: 6px;
+  padding: 11px 16px;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--text-bright, #eef2f7);
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+.cosplay-input::placeholder {
+  color: rgba(184,200,220,0.25);
+}
+.cosplay-input:focus {
+  border-color: var(--neon-cyan, #00ffff);
+  box-shadow: 0 0 0 3px rgba(0,255,255,0.08), 0 0 20px rgba(0,255,255,0.12);
+}
+.has-error .cosplay-input,
+.has-error .cosplay-input:focus {
+  border-color: var(--neon-pink, #ff2d78);
+  box-shadow: 0 0 0 3px rgba(255,45,120,0.12);
+}
+
+/* animated bottom bar */
+.cosplay-input-bar {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--neon-pink, #ff2d78), var(--neon-cyan, #00ffff));
+  border-radius: 2px;
+  transition: width 0.4s ease, left 0.4s ease;
+}
+.cosplay-input:focus ~ .cosplay-input-bar {
+  width: 100%;
+  left: 0;
+}
+
+.cosplay-error {
+  font-size: 0.78rem;
+  letter-spacing: 1px;
+  color: var(--neon-pink, #ff2d78);
+  text-transform: uppercase;
+}
+
+/* ── Game card grid ── */
+.cosplay-game-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+.cosplay-game-card {
+  position: relative;
+  height: 85px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid rgba(0,255,255,0.15);
+  background-image: var(--bg);
+  background-size: cover;
+  background-position: center;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  outline: none;
+}
+.cosplay-game-card:hover {
+  border-color: rgba(0,255,255,0.5);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 28px rgba(0,255,255,0.20);
+}
+.cosplay-game-card.selected {
+  border-color: var(--neon-pink, #ff2d78);
+  box-shadow: 0 0 0 3px rgba(255,45,120,0.30), 0 8px 32px rgba(255,45,120,0.30);
+  transform: translateY(-6px) scale(1.03);
+}
+.cosplay-game-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(6,10,20,0.88) 0%, rgba(6,10,20,0.25) 60%, transparent 100%);
+  transition: background 0.3s;
+}
+.cosplay-game-card.selected .cosplay-game-overlay {
+  background: linear-gradient(to top, rgba(255,45,120,0.55) 0%, rgba(6,10,20,0.10) 60%, transparent 100%);
+}
+.cosplay-game-label {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 2px;
+  color: #fff;
+  text-transform: uppercase;
+  text-shadow: 0 1px 6px rgba(0,0,0,0.8);
+  z-index: 1;
+}
+/* animated selection ring */
+.cosplay-game-select-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  pointer-events: none;
+}
+.cosplay-game-card.selected .cosplay-game-select-ring {
+  border-color: var(--neon-pink, #ff2d78);
+  animation: ring-pulse 1.2s ease-in-out infinite;
+}
+@keyframes ring-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,45,120,0.5); }
+  50%       { box-shadow: 0 0 0 8px rgba(255,45,120,0);  }
+}
+
+/* ── CTA Submit button — same hero btn-primary DNA + extra layers ── */
+.cosplay-submit-row {
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+}
+.cosplay-cta-btn {
+  position: relative;
+  overflow: hidden;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(135deg, var(--neon-pink, #ff2d78), var(--neon-magenta, #ff00ff));
+  border: none;
+  border-radius: 6px;
+  padding: 18px 64px;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(255,45,120,0.45), 0 0 0 0 rgba(255,45,120,0.3);
+  transition: transform 0.25s, box-shadow 0.25s;
+  animation: cta-breathe 2.8s ease-in-out infinite alternate;
+}
+@keyframes cta-breathe {
+  from { box-shadow: 0 6px 24px rgba(255,45,120,0.40), 0 0  0px rgba(255,0,255,0.20); }
+  to   { box-shadow: 0 10px 40px rgba(255,45,120,0.65), 0 0 24px rgba(255,0,255,0.40); }
+}
+.cosplay-cta-btn:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 14px 44px rgba(255,45,120,0.70), 0 0 32px rgba(255,0,255,0.45);
+  animation-play-state: paused;
+}
+.cosplay-cta-btn:active {
+  transform: translateY(-1px) scale(1.01);
+}
+/* sweep shine — same as .btn::after in homepage */
+.cosplay-cta-shine {
+  position: absolute;
+  top: 0;
+  left: -70%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-20deg);
+  animation: btn-sweep 2.4s ease-in-out infinite;
+}
+@keyframes btn-sweep {
+  0%   { left: -70%; }
+  60%  { left: 130%; }
+  100% { left: 130%; }
+}
+
+/* ── Success card ── */
+.cosplay-success {
+  text-align: center;
+  padding: 60px 32px;
+  background: rgba(10,14,26,0.80);
+  border: 1px solid rgba(0,255,255,0.20);
+  border-radius: 12px;
+  box-shadow: 0 0 60px rgba(0,255,255,0.08);
+  animation: form-fadein 0.6s ease both;
+}
+.cosplay-success-icon {
+  font-size: 3rem;
+  color: var(--neon-cyan, #00ffff);
+  text-shadow: 0 0 20px var(--neon-cyan, #00ffff);
+  animation: spin-full 6s linear infinite;
+  display: inline-block;
+  margin-bottom: 16px;
+}
+@keyframes spin-full {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+.cosplay-success-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.4rem, 4vw, 2.2rem);
+  color: #fff;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+}
+.cosplay-success-title span {
+  background: linear-gradient(90deg, var(--neon-pink, #ff2d78), var(--neon-cyan, #00ffff));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.cosplay-success-note {
+  color: var(--text-dim, rgba(184,200,220,0.55));
+  margin: 12px 0 28px;
+  line-height: 1.7;
+}
+
+/* ── Responsive ── */
+@media (max-width: 960px) {
+  .cosplay-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .cosplay-main {
+    height: auto;
+    overflow: auto;
+    padding: 32px 24px 60px;
+    align-items: flex-start;
+  }
+}
+@media (max-width: 700px) {
+  .cosplay-nav { padding: 16px 20px; }
+  .cosplay-game-grid { grid-template-columns: repeat(2, 1fr); }
+  .cosplay-game-card { height: 80px; }
+  .cosplay-cta-btn { padding: 14px 28px; font-size: 0.78rem; }
+  .cosplay-title { font-size: 1.8rem; }
+  .cosplay-row { grid-template-columns: 1fr 1fr; }
+}
