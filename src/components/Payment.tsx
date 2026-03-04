@@ -44,7 +44,7 @@ const Payment = () => {
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('method-selection');
   const [errorMessage, setErrorMessage] = useState('');
   const [formData, setFormData] = useState<PaymentFormData>({
-    amount: '500',
+    amount: '1500',
     cardNumber: '',
     cardHolder: '',
     expiryDate: '',
@@ -357,7 +357,7 @@ const Payment = () => {
                 </div>
                 <div className="success-item total">
                   <span>Payment Amount:</span>
-                  <strong>₹500</strong>
+                  <strong>Rs. 1,500</strong>
                 </div>
               </div>
 
@@ -423,7 +423,7 @@ const Payment = () => {
               </div>
               <div className="summary-total">
                 <span>💰 Amount to Pay:</span>
-                <strong>₹500</strong>
+                <strong>Rs. 1,500</strong>
               </div>
             </div>
 
@@ -546,14 +546,14 @@ const Payment = () => {
                   name="amount"
                   value={formData.amount}
                   onChange={handleInputChange}
-                  placeholder="500"
+                  placeholder="1500"
                   disabled
                 />
               </div>
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-submit">
-                  Pay ₹{formData.amount}
+                  Pay Rs{formData.amount}
                 </button>
                 <button 
                   type="button" 
@@ -600,7 +600,7 @@ const Payment = () => {
                 </div>
                 <div className="info-item">
                   <span>Amount:</span>
-                  <strong>₹500</strong>
+                  <strong>Rs. 1,500</strong>
                 </div>
               </div>
 

@@ -116,50 +116,48 @@ export default function AdminDashboard() {
     { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: '$100,000' },
   ]);
 
-  const [payments] = useState<Payment[]>([
-    {
-      id: '1', playerName: 'Alex Lightning', email: 'alex@email.com', phone: '+94 712 345 678',
-      game: 'Free Fire', team: 'Thunder Warriors', amount: '$25.00', paymentDate: '2026-02-10',
-      paymentMethod: 'Bank Transfer', transactionId: 'TXN-FF-001', status: 'verified',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/00ffff?text=Payment+Slip+%23001',
-      registeredAt: '2026-02-10 09:32 AM',
-    },
-    {
-      id: '2', playerName: 'Shadow Master', email: 'shadow@email.com', phone: '+94 723 456 789',
-      game: 'PUBG', team: 'Phoenix Squad', amount: '$25.00', paymentDate: '2026-02-11',
-      paymentMethod: 'Online Payment', transactionId: 'TXN-PB-002', status: 'verified',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/ff0080?text=Payment+Slip+%23002',
-      registeredAt: '2026-02-11 11:15 AM',
-    },
-    {
-      id: '3', playerName: 'Phoenix Rising', email: 'phoenix@email.com', phone: '+94 734 567 890',
-      game: 'Valorant', team: 'Neon Knights', amount: '$30.00', paymentDate: '2026-02-12',
-      paymentMethod: 'Bank Transfer', transactionId: 'TXN-VL-003', status: 'pending',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/ff8e53?text=Payment+Slip+%23003',
-      registeredAt: '2026-02-12 02:45 PM',
-    },
-    {
-      id: '4', playerName: 'Cyber King', email: 'cyberking@email.com', phone: '+94 745 678 901',
-      game: 'Free Fire', team: 'Silent Assassins', amount: '$25.00', paymentDate: '2026-02-13',
-      paymentMethod: 'Mobile Wallet', transactionId: 'TXN-FF-004', status: 'pending',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/a55eea?text=Payment+Slip+%23004',
-      registeredAt: '2026-02-13 08:20 AM',
-    },
-    {
-      id: '5', playerName: 'Titan Blaze', email: 'titan@email.com', phone: '+94 756 789 012',
-      game: 'PUBG', team: 'Cyber Legends', amount: '$25.00', paymentDate: '2026-02-14',
-      paymentMethod: 'Bank Transfer', transactionId: 'TXN-PB-005', status: 'rejected',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/ff6b6b?text=Payment+Slip+%23005',
-      registeredAt: '2026-02-14 04:10 PM',
-    },
-    {
-      id: '6', playerName: 'Nova Strike', email: 'nova@email.com', phone: '+94 767 890 123',
-      game: 'Valorant', team: 'Thunder Warriors', amount: '$30.00', paymentDate: '2026-02-15',
-      paymentMethod: 'Online Payment', transactionId: 'TXN-VL-006', status: 'verified',
-      paymentSlipUrl: 'https://placehold.co/600x400/1a1f3a/00b894?text=Payment+Slip+%23006',
-      registeredAt: '2026-02-15 10:55 AM',
-    },
-  ]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loadingPayments, setLoadingPayments] = useState<boolean>(false);
+  const [paymentsError, setPaymentsError] = useState<string | null>(null);
+
+  // Fetch payments from backend and map to frontend Payment shape
+  const fetchPayments = async (page = 1, limit = 10) => {
+    setLoadingPayments(true);
+    setPaymentsError(null);
+    try {
+      const res = await fetch(`http://localhost:5000/api/v1/payments?page=${page}&limit=${limit}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const mapped: Payment[] = (data.payments || []).map((p: any) => ({
+        id: p._id,
+        playerName: p.accountHolder || `User ${String(p.userId || '').slice(-6)}`,
+        email: p.email || '',
+        phone: p.accountNumber || '',
+        game: p.game || '',
+        team: p.team || '',
+        amount: `Rs ${
+          (typeof p.amount === 'number' ? p.amount : parseFloat(p.amount || 0)).toFixed(2)
+        }`,
+        paymentDate: p.paymentDate || (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''),
+        paymentMethod: p.paymentMethod === 'BANK' ? 'Bank Transfer' : p.paymentMethod || '',
+        transactionId: p.transactionId || '',
+        status: (String(p.status || '').toLowerCase() === 'verified' ? 'verified' : String(p.status || '').toLowerCase() === 'rejected' ? 'rejected' : 'pending'),
+        paymentSlipUrl: p.slipFilePath || p.paymentSlipUrl || '',
+        registeredAt: p.createdAt ? new Date(p.createdAt).toLocaleString() : (p.registeredAt || ''),
+      }));
+      setPayments(mapped);
+    } catch (err: any) {
+      console.error('Error fetching payments:', err);
+      setPaymentsError(err.message || 'Failed to fetch payments');
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
+
+  useEffect(() => {
+    // fetch initially and whenever payments tab is selected
+    fetchPayments();
+  }, []);
 
   const [tournaments] = useState<Tournament[]>([
     { id: '1', name: 'Free Fire Battle Royale Season 1', game: 'Free Fire', totalTeams: 32, winnerId: '1', status: 'finished', startDate: '2026-01-10' },
@@ -668,7 +666,7 @@ export default function AdminDashboard() {
         {/* Payments Tab */}
         {activeTab === 'payments' && (() => {
           const filtered = payments.filter(p => paymentFilter === 'all' || p.status === paymentFilter);
-          const parseAmt = (a: string) => parseFloat(a.replace('$', ''));
+          const parseAmt = (a: string) => parseFloat(a.replace(/[^0-9.-]+/g, ''));
           const totalRevenue = payments.reduce((s, p) => s + parseAmt(p.amount), 0);
           const verifiedRevenue = payments.filter(p => p.status === 'verified').reduce((s, p) => s + parseAmt(p.amount), 0);
           const pendingRevenue = payments.filter(p => p.status === 'pending').reduce((s, p) => s + parseAmt(p.amount), 0);
@@ -761,20 +759,17 @@ export default function AdminDashboard() {
                   <table className="excel-table">
                     <thead>
                       <tr>
-                        <th className="col-no">#</th>
-                        <th>Player Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Game</th>
-                        <th>Team</th>
-                        <th>Amount</th>
-                        <th>Method</th>
-                        <th>Transaction ID</th>
-                        <th>Payment Date</th>
-                        <th>Registered At</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                      </tr>
+                          <th className="col-no">#</th>
+                          <th>Player Name</th>
+                          <th>Phone</th>
+                          <th>Amount</th>
+                          <th>Method</th>
+                          <th>Transaction ID</th>
+                          <th>Payment Date</th>
+                          <th>Registered At</th>
+                          <th>Status</th>
+                          <th>Action</th>
+                        </tr>
                     </thead>
                     <tbody>
                       {filtered.map((payment, index) => (
@@ -788,10 +783,7 @@ export default function AdminDashboard() {
                             <span className="excel-avatar">{payment.playerName.charAt(0)}</span>
                             {payment.playerName}
                           </td>
-                          <td className="excel-email">{payment.email}</td>
                           <td>{payment.phone}</td>
-                          <td><span className="excel-game-badge">{payment.game}</span></td>
-                          <td>{payment.team}</td>
                           <td className="excel-amount">{payment.amount}</td>
                           <td>{payment.paymentMethod}</td>
                           <td className="excel-txn">{payment.transactionId}</td>
@@ -815,11 +807,7 @@ export default function AdminDashboard() {
                         <td className="col-no"></td>
                         <td><strong>TOTALS</strong></td>
                         <td></td>
-                        <td></td>
-                        <td></td>
-                        <td><strong>{filtered.length} records</strong></td>
-                        <td className="excel-amount total-cell"><strong>${filteredTotal.toFixed(2)}</strong></td>
-                        <td></td>
+                        <td className="excel-amount total-cell"><strong>Rs {filteredTotal.toFixed(2)}</strong></td>
                         <td></td>
                         <td></td>
                         <td></td>
