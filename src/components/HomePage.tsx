@@ -11,6 +11,7 @@ import slide02 from '../assets/image/slide_show/slid_show_02.webp';
 import slide04 from '../assets/image/slide_show/slid_show_04.jpg';
 import slide05 from '../assets/image/slide_show/slid_show_05.webp';
 import slide06 from '../assets/image/slide_show/slid_show_06.png';
+import { Target, Briefcase, Eye, Cpu, CupSoda, Trophy, TrendingUp, Globe, Lightbulb } from "lucide-react";
 import './HomePage.css';
 
 export default function HomePage() {
@@ -54,9 +55,9 @@ export default function HomePage() {
         <div className="container">
           <div className="nav-content">
             <div className="logo"> - CEYLON ARENA -</div>
-            
+
             {/* Hamburger Menu Button */}
-            <button 
+            <button
               className={`hamburger ${mobileMenuOpen ? 'active' : ''}`}
               onClick={toggleMobileMenu}
               aria-label="Toggle menu"
@@ -75,12 +76,21 @@ export default function HomePage() {
               <li><a href="#about" onClick={closeMobileMenu}>About</a></li>
               <li><a href="#contact" onClick={closeMobileMenu}>Contact Us</a></li>
               <li className="mobile-only">
-                <button 
-                  className="btn btn-secondary" 
+                <button
+                  className="btn btn-secondary"
                   onClick={() => { navigate('/register'); closeMobileMenu(); }}
                   style={{ width: '100%' }}
                 >
                   Register
+                </button>
+              </li>
+              <li className="mobile-only">
+                <button
+                  className="btn btn-primary"
+                  onClick={() => { navigate('/cosplay'); closeMobileMenu(); }}
+                  style={{ width: '100%', background: 'linear-gradient(135deg,#b44dff,#ff2d78)', boxShadow: '0 6px 24px rgba(180,77,255,0.45)' }}
+                >
+                  🎭 Cosplay Registration
                 </button>
               </li>
             </ul>
@@ -91,6 +101,13 @@ export default function HomePage() {
               </button>
               <button className="btn btn-secondary" onClick={() => navigate('/register')}>
                 Register
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => navigate('/cosplay')}
+                style={{ background: 'linear-gradient(135deg,#b44dff,#ff2d78)', boxShadow: '0 6px 24px rgba(180,77,255,0.45)' }}
+              >
+                🎭 Cosplay
               </button>
             </div>
           </div>
@@ -104,9 +121,9 @@ export default function HomePage() {
             <div className="hero-content">
               <h1>
                 <div className="logo-container">
-                  <img 
-                    src={logoImg} 
-                    alt="Ceylon Arena Logo" 
+                  <img
+                    src={logoImg}
+                    alt="Ceylon Arena Logo"
                     className="animated-logo"
                   />
                 </div>
@@ -115,7 +132,7 @@ export default function HomePage() {
 
               <p>THE BIGGEST PRIZE POOL OF SRI LANKAN GAMING HISTORY!</p>
               <p>Hurry up! Gammers. We are so excited to announce you.... This is the Biggest Prize Pool of Sri Lankan gaming history. Yo! Who wanna be the Champs? Be Ready! For The Biggest Live Battle!</p>
-              
+
               <div className="hero-stats">
                 <div className="stat">
                   <span className="stat-number">01</span>
@@ -176,12 +193,6 @@ export default function HomePage() {
               <div className="corner-accent bottom-right"></div>
               <div className="side-accent left"></div>
               <div className="side-accent right"></div>
-              {/* <img src={logoImg} alt="Logo Line 1" className="logo-line-scroll line1" />
-              <img src={logoImg} alt="Logo Line 2" className="logo-line-scroll line2" />
-              <img src={logoImg} alt="Logo Line 3" className="logo-line-scroll line3" />
-              <img src={logoImg} alt="Logo Line 4" className="logo-line-scroll line4" />
-              <img src={logoImg} alt="Logo Line 5" className="logo-line-scroll line5" />
-              <img src={logoImg} alt="Single Logo" className="bottom-logo-scroll" /> */}
             </div>
 
           </div>
@@ -203,7 +214,7 @@ export default function HomePage() {
         </div>
       </section>
 
-         {/**/}
+      {/**/}
       {/* Featured Games Section */}
       <section className="section" id="games">
         <div className="container">
@@ -230,7 +241,7 @@ export default function HomePage() {
                 <span>🎮 1,234 Active Players</span>
                 <span>🏆 15 Live Tournaments</span>
               </div>
-              <button className="btn btn-primary" style={{width: '100%'}} onClick={() => navigate('/register')}>
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => navigate('/register')}>
                 Join Tournament
               </button>
             </div>
@@ -248,7 +259,7 @@ export default function HomePage() {
                 <span>🎮 2,456 Active Players</span>
                 <span>🏆 22 Live Tournaments</span>
               </div>
-              <button className="btn btn-primary" style={{width: '100%'}} disabled>
+              <button className="btn btn-primary" style={{ width: '100%' }} disabled>
                 Coming Soon
               </button>
             </div>
@@ -266,7 +277,7 @@ export default function HomePage() {
                 <span>🎮 987 Active Players</span>
                 <span>🏆 8 Live Tournaments</span>
               </div>
-              <button className="btn btn-primary" style={{width: '100%'}} disabled>
+              <button className="btn btn-primary" style={{ width: '100%' }} disabled>
                 Coming Soon
               </button>
             </div>
@@ -284,7 +295,7 @@ export default function HomePage() {
                 <span>🎮 1,567 Active Players</span>
                 <span>🏆 12 Live Tournaments</span>
               </div>
-              <button className="btn btn-primary" style={{width: '100%'}} disabled>
+              <button className="btn btn-primary" style={{ width: '100%' }} disabled>
                 Coming Soon
               </button>
             </div>
@@ -330,7 +341,7 @@ export default function HomePage() {
               </div>
               <div className="event-info">
                 <h3>PUBG Pro League Season 3</h3>
-                <p>Prize Pool: $75,000 | 64 Teams</p>
+                <p>Prize Pool: LKR 75,000 | 64 Teams</p>
                 <div className="event-tags">
                   <span className="tag">Professional</span>
                   <span className="tag">Squad</span>
@@ -348,7 +359,7 @@ export default function HomePage() {
               </div>
               <div className="event-info">
                 <h3>Valorant Masters Cup</h3>
-                <p>Prize Pool: $100,000 | 32 Teams</p>
+                <p>Prize Pool: LKR 100,000 | 32 Teams</p>
                 <div className="event-tags">
                   <span className="tag">Tactical</span>
                   <span className="tag">Team</span>
@@ -384,7 +395,7 @@ export default function HomePage() {
               <p>Tournaments</p>
             </div>
             <div className="stat-item">
-              <h3>$1300K+</h3>
+              <h3>LKR 1300K+</h3>
               <p>Prize Money</p>
             </div>
             <div className="stat-item">
@@ -416,12 +427,7 @@ export default function HomePage() {
             <div className="about-grid">
               <div className="about-card">
                 <div className="about-icon" aria-hidden="true">
-                  <svg viewBox="0 0 64 64" role="img" focusable="false">
-                    <circle cx="32" cy="32" r="28" />
-                    <circle cx="32" cy="32" r="18" />
-                    <circle cx="32" cy="32" r="8" />
-                    <path d="M50 14l6 6-18 6 6-12z" />
-                  </svg>
+                  <Target size={40} strokeWidth={2} />
                 </div>
                 <h3>Our Mission</h3>
                 <p>
@@ -432,13 +438,7 @@ export default function HomePage() {
 
               <div className="about-card">
                 <div className="about-icon" aria-hidden="true">
-                  <svg viewBox="0 0 64 64" role="img" focusable="false">
-                    <path d="M18 10h28v8c0 9.4-7.6 17-17 17h-2c-9.4 0-17-7.6-17-17v-8z" />
-                    <path d="M14 12H8c0 10 6 18 14 20" />
-                    <path d="M50 12h6c0 10-6 18-14 20" />
-                    <rect x="26" y="35" width="12" height="8" />
-                    <rect x="22" y="43" width="20" height="6" />
-                  </svg>
+                  <Trophy size={40} strokeWidth={2} />
                 </div>
                 <h3>What We Offer</h3>
                 <p>
@@ -449,9 +449,7 @@ export default function HomePage() {
 
               <div className="about-card">
                 <div className="about-icon" aria-hidden="true">
-                  <svg viewBox="0 0 64 64" role="img" focusable="false">
-                    <path d="M36 4L14 34h14l-2 26 24-34H36z" />
-                  </svg>
+                  <Lightbulb size={40} strokeWidth={2} />
                 </div>
                 <h3>Our Vision</h3>
                 <p>
@@ -480,7 +478,7 @@ export default function HomePage() {
                 <span className="feature-number">03</span>
                 <div>
                   <h4>Prize Pools</h4>
-                  <p>Over $500K in tournament prizes annually</p>
+                  <p>Over LKR 500K in tournament prizes annually</p>
                 </div>
               </div>
               <div className="feature-item">
@@ -500,31 +498,12 @@ export default function HomePage() {
         <div className="container">
           <h2>Gammers.... Are you ready for the Biggest Combat?</h2>
           <p>Be there! To win. This is the Biggest Prize Pool of Sri Lankan gaming history!</p>
-          <button 
-            className="btn btn-primary" 
-            style={{ padding: '18px 60px', fontSize: '1.2rem' }} 
+          <button
+            className="btn btn-primary"
+            style={{ padding: '18px 60px', fontSize: '1.2rem' }}
             onClick={() => navigate('/register')}
           >
             Create Account
-          </button>
-        </div>
-      </section>
-
-      <section className="section" aria-label="Temporary dashboard access">
-        <div className="container" style={{ textAlign: 'center', display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button
-            className="btn btn-secondary"
-            onClick={() => navigate('/dashboard')}
-            style={{ padding: '12px 36px' }}
-          >
-            Temporary: Go to Dashboard
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate('/admin')}
-            style={{ padding: '12px 36px', background: 'linear-gradient(45deg, #ff0080, #ff00ff)' }}
-          >
-            ⚡ Admin Control Center
           </button>
         </div>
       </section>
@@ -554,20 +533,65 @@ export default function HomePage() {
             </p>
             <div className="contact-socials">
               <span className="contact-follow">Follow Us On:</span>
-              <a href="#" className="contact-social-icon" aria-label="Instagram">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.334 3.608 1.308.975.975 1.246 2.242 1.308 3.608.058 1.265.069 1.645.069 4.849s-.012 3.584-.07 4.85c-.062 1.366-.334 2.633-1.308 3.608-.975.975-2.242 1.246-3.608 1.308-1.265.058-1.645.069-4.849.069s-3.584-.012-4.85-.07c-1.366-.062-2.633-.334-3.608-1.308-.975-.975-1.246-2.242-1.308-3.608C2.175 15.584 2.163 15.204 2.163 12s.012-3.584.07-4.85c.062-1.366.334-2.633 1.308-3.608.975-.975 2.242-1.246 3.608-1.308C8.416 2.175 8.796 2.163 12 2.163zm0-2.163C8.741 0 8.332.014 7.052.072 5.197.157 3.355.673 2.014 2.014.673 3.355.157 5.197.072 7.052.014 8.332 0 8.741 0 12c0 3.259.014 3.668.072 4.948.085 1.855.601 3.697 1.942 5.038 1.341 1.341 3.183 1.857 5.038 1.942C8.332 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 1.855-.085 3.697-.601 5.038-1.942 1.341-1.341 1.857-3.183 1.942-5.038.058-1.28.072-1.689.072-4.948 0-3.259-.014-3.668-.072-4.948-.085-1.855-.601-3.697-1.942-5.038C20.645.673 18.803.157 16.948.072 15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+
+              <a
+                href="https://www.instagram.com/ceylonarena?igsh=MWd4djJ0NmUxa3QwcQ=="
+                className="contact-social-icon"
+                aria-label="Instagram"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07..." />
+                </svg>
               </a>
-              <a href="#" className="contact-social-icon" aria-label="Facebook">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.413c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg>
+
+              <a
+                href="https://www.facebook.com/share/1JsvmDPe6W/?mibextid=wwXIfr"
+                className="contact-social-icon"
+                aria-label="Facebook"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M24 12.073C24 5.405 18.627 0..." />
+                </svg>
               </a>
-              <a href="#" className="contact-social-icon" aria-label="Twitter">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+
+              <a
+                href="#"
+                className="contact-social-icon"
+                aria-label="Twitter"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18.244 2.25h3.308..." />
+                </svg>
               </a>
-              <a href="#" className="contact-social-icon" aria-label="Discord">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+
+              <a
+                href="#"
+                className="contact-social-icon"
+                aria-label="Discord"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.317 4.37a19.791..." />
+                </svg>
               </a>
-              <a href="#" className="contact-social-icon" aria-label="Twitch">
-                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+
+              <a
+                href="#"
+                className="contact-social-icon"
+                aria-label="Twitch"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M11.571 4.714h1.715..." />
+                </svg>
               </a>
             </div>
           </div>
@@ -599,11 +623,11 @@ export default function HomePage() {
           <div className="footer-strip-track">
             {[freefireImg, pubgImg, codImg, valoranImg, slide01, slide02, contactBannerImg, slide04, slide05, slide06,
               freefireImg, pubgImg, codImg, valoranImg, slide01, slide02, contactBannerImg, slide04, slide05, slide06].map((src, i) => (
-              <div key={i} className="footer-strip-item">
-                <img src={src} alt="" className="footer-strip-img" />
-                <div className="footer-strip-shine" />
-              </div>
-            ))}
+                <div key={i} className="footer-strip-item">
+                  <img src={src} alt="" className="footer-strip-img" />
+                  <div className="footer-strip-shine" />
+                </div>
+              ))}
           </div>
         </div>
 
@@ -630,11 +654,36 @@ export default function HomePage() {
           {/* ── SOCIALS ── */}
           <div className="footer-col">
             <h4 className="footer-col-title">SOCIALS</h4>
-            <a href="#" className="footer-link">DISCORD</a>
-            <a href="#" className="footer-link">INSTAGRAM</a>
-            <a href="#" className="footer-link">YOUTUBE</a>
-            <a href="#" className="footer-link">TWITTER / X</a>
-            <a href="#" className="footer-link">FACEBOOK</a>
+
+            <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
+              DISCORD
+            </a>
+
+            <a
+              href="https://www.instagram.com/ceylonarena?igsh=MWd4djJ0NmUxa3QwcQ=="
+              className="footer-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              INSTAGRAM
+            </a>
+
+            <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
+              YOUTUBE
+            </a>
+
+            <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
+              TWITTER / X
+            </a>
+
+            <a
+              href="https://www.facebook.com/share/1JsvmDPe6W/?mibextid=wwXIfr"
+              className="footer-link"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              FACEBOOK
+            </a>
           </div>
 
           {/* ── CONTACT ── */}
@@ -649,10 +698,10 @@ export default function HomePage() {
           {/* ── PAGES ── */}
           <div className="footer-col">
             <h4 className="footer-col-title">PAGES</h4>
-            <a href="#home"   className="footer-link">HOME</a>
-            <a href="#games"  className="footer-link">GAMES</a>
+            <a href="#home" className="footer-link">HOME</a>
+            <a href="#games" className="footer-link">GAMES</a>
             <a href="#events" className="footer-link">EVENTS</a>
-            <a href="#about"  className="footer-link">ABOUT</a>
+            <a href="#about" className="footer-link">ABOUT</a>
             <button className="footer-link footer-link-btn" onClick={() => navigate('/register')}>REGISTER</button>
             <button className="footer-link footer-link-btn" onClick={() => navigate('/sign')}>LOGIN</button>
           </div>

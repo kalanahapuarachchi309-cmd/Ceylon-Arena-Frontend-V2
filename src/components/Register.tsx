@@ -68,7 +68,7 @@
         id: 'freefire',
         name: 'Free Fire',
         icon: freeFireLogo,
-        description: 'Battle Royale - 50 Players',
+        description: 'Clash Squad - 50 Players',
         teamSizes: ['Solo', 'Duo', 'Squad (4)'],
         color: '#ff6b6b',
         lightColor: '#ff8b8b',

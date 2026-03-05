@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
+import { API_BASE_URL } from '../config/api';
 
 interface Team {
   id: string;
@@ -111,9 +112,9 @@ export default function AdminDashboard() {
   ]);
 
   const [events] = useState<Event[]>([
-    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: '$50,000' },
-    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: '$75,000' },
-    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: '$100,000' },
+    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: 'LKR 50,000' },
+    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: 'LKR 75,000' },
+    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: 'LKR 100,000' },
   ]);
 
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -125,7 +126,7 @@ export default function AdminDashboard() {
     setLoadingPayments(true);
     setPaymentsError(null);
     try {
-      const res = await fetch(`http://localhost:5000/api/v1/payments?page=${page}&limit=${limit}`);
+      const res = await fetch(`${API_BASE_URL}/api/v1/payments?page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const mapped: Payment[] = (data.payments || []).map((p: any) => ({
@@ -135,7 +136,7 @@ export default function AdminDashboard() {
         phone: p.accountNumber || '',
         game: p.game || '',
         team: p.team || '',
-        amount: `Rs ${
+        amount: `LKR ${
           (typeof p.amount === 'number' ? p.amount : parseFloat(p.amount || 0)).toFixed(2)
         }`,
         paymentDate: p.paymentDate || (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''),

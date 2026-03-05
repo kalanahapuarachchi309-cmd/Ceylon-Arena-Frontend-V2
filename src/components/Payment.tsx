@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './Payment.css';
+import { API_ENDPOINTS } from '../config/api';
 
 type PaymentMethod = 'card' | 'bank' | null;
 
@@ -86,7 +87,7 @@ const Payment = () => {
 
     try {
       // First register the user with complete data
-      const registerResponse = await fetch('http://localhost:5000/api/v1/users/register', {
+      const registerResponse = await fetch(API_ENDPOINTS.USERS.REGISTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,7 +123,7 @@ const Payment = () => {
       }
 
       // Then process card payment
-      const paymentResponse = await fetch('http://localhost:5000/api/v1/payments/card', {
+      const paymentResponse = await fetch(API_ENDPOINTS.PAYMENTS.CARD, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -279,7 +280,7 @@ const Payment = () => {
       formDataToSend.append('slipFile', formData.slipFile);
 
       const response = await fetch(
-        'http://localhost:5000/api/v1/users/register-with-bank-payment',
+        API_ENDPOINTS.USERS.REGISTER_WITH_BANK,
         {
           method: 'POST',
           body: formDataToSend
@@ -357,7 +358,7 @@ const Payment = () => {
                 </div>
                 <div className="success-item total">
                   <span>Payment Amount:</span>
-                  <strong>Rs. 1,500</strong>
+                  <strong>LKR 1,500</strong>
                 </div>
               </div>
 
@@ -423,7 +424,7 @@ const Payment = () => {
               </div>
               <div className="summary-total">
                 <span>💰 Amount to Pay:</span>
-                <strong>Rs. 1,500</strong>
+                <strong>LKR 1,500</strong>
               </div>
             </div>
 
@@ -539,7 +540,7 @@ const Payment = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="amount">Amount (₹) *</label>
+                <label htmlFor="amount">Amount (LKR) *</label>
                 <input
                   type="number"
                   id="amount"
@@ -553,7 +554,7 @@ const Payment = () => {
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-submit">
-                  Pay Rs{formData.amount}
+                  Pay LKR {formData.amount}
                 </button>
                 <button 
                   type="button" 
@@ -600,7 +601,7 @@ const Payment = () => {
                 </div>
                 <div className="info-item">
                   <span>Amount:</span>
-                  <strong>Rs. 1,500</strong>
+                  <strong>LKR 1,500</strong>
                 </div>
               </div>
 

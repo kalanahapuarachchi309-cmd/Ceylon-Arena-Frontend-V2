@@ -8,10 +8,9 @@ import valoranImg from '../assets/image/Valoran.avif';
 import './CosplayRegistration.css';
 
 const GAMES = [
-  { id: 'freefire',     label: 'Free Fire',       img: freefireImg },
-  { id: 'pubg',         label: 'PUBG Mobile',      img: pubgImg     },
-  { id: 'cod',          label: 'Call of Duty',     img: codImg      },
-  { id: 'valorant',     label: 'Valorant',         img: valoranImg  },
+  { id: 'game',     label: 'Game',       img: freefireImg },
+  { id: 'anime',    label: 'Anime',      img: pubgImg     },
+  { id: 'comics',   label: 'Comics',     img: codImg      },
 ];
 
 export default function CosplayRegistration() {
@@ -88,10 +87,10 @@ export default function CosplayRegistration() {
 
       {/* ── Nav back ── */}
       <nav className="cosplay-nav">
-        <img src={logoImg} alt="Ceylon Arena" className="cosplay-nav-logo" />
         <button className="btn btn-secondary cosplay-back-btn" onClick={() => navigate('/')}>
           ← BACK TO HOME
         </button>
+        <img src={logoImg} alt="Ceylon Arena" className="cosplay-nav-logo" />
       </nav>
 
       {/* ── Main content ── */}
@@ -161,7 +160,7 @@ export default function CosplayRegistration() {
                 {/* Game selector */}
                 <div className={`cosplay-field ${errors.game ? 'has-error' : ''}`}>
                   <label className="cosplay-label">
-                    <span className="cosplay-label-num">03</span> SELECT YOUR GAME
+                    <span className="cosplay-label-num">03</span> SELECT YOUR CATEGORY
                   </label>
                   <div className="cosplay-game-grid">
                     {GAMES.map(g => (
