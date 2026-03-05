@@ -11,7 +11,7 @@ import slide02 from '../assets/image/slide_show/slid_show_02.webp';
 import slide04 from '../assets/image/slide_show/slid_show_04.jpg';
 import slide05 from '../assets/image/slide_show/slid_show_05.webp';
 import slide06 from '../assets/image/slide_show/slid_show_06.png';
-import { Target, Briefcase, Eye, Cpu, CupSoda, Trophy, TrendingUp, Globe, Lightbulb } from "lucide-react";
+import { Target, Trophy, Lightbulb } from "lucide-react";
 import './HomePage.css';
 
 export default function HomePage() {

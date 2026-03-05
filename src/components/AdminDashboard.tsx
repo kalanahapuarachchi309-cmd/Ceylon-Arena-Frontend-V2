@@ -118,13 +118,9 @@ export default function AdminDashboard() {
   ]);
 
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [loadingPayments, setLoadingPayments] = useState<boolean>(false);
-  const [paymentsError, setPaymentsError] = useState<string | null>(null);
 
   // Fetch payments from backend and map to frontend Payment shape
   const fetchPayments = async (page = 1, limit = 10) => {
-    setLoadingPayments(true);
-    setPaymentsError(null);
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/payments?page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -149,9 +145,6 @@ export default function AdminDashboard() {
       setPayments(mapped);
     } catch (err: any) {
       console.error('Error fetching payments:', err);
-      setPaymentsError(err.message || 'Failed to fetch payments');
-    } finally {
-      setLoadingPayments(false);
     }
   };
 

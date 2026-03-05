@@ -4,7 +4,6 @@ import logoImg from '../assets/image/web_Site_logo/Ceylon_Arena_Logo_CMYK-01.png
 import freefireImg from '../assets/image/Freefire.jpeg';
 import pubgImg from '../assets/image/pubg-mobile.jpg';
 import codImg from '../assets/image/call-of-duty.webp';
-import valoranImg from '../assets/image/Valoran.avif';
 import './CosplayRegistration.css';
 
 const GAMES = [
