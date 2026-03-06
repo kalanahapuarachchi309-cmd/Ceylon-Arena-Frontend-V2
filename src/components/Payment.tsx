@@ -77,7 +77,7 @@ const Payment = () => {
 
   const handleCardPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.cardNumber || !formData.cardHolder || !formData.expiryDate || !formData.cvv) {
       alert('Please fill all card details');
       return;
@@ -114,7 +114,7 @@ const Payment = () => {
       }
 
       const registerData = await registerResponse.json();
-      
+
       // Store tokens and user data if provided
       if (registerData.accessToken) {
         localStorage.setItem("accessToken", registerData.accessToken);
@@ -238,8 +238,6 @@ const Payment = () => {
       !formData.bankName ||
       !formData.accountHolder ||
       !formData.accountNumber ||
-      !formData.ifscCode ||
-      !formData.transactionId ||
       !formData.slipFile
     ) {
       alert('Please fill all bank details and upload payment slip');
@@ -272,8 +270,6 @@ const Payment = () => {
       formDataToSend.append('bankName', formData.bankName);
       formDataToSend.append('accountHolder', formData.accountHolder);
       formDataToSend.append('accountNumber', formData.accountNumber);
-      formDataToSend.append('ifscCode', formData.ifscCode);
-      formDataToSend.append('transactionId', formData.transactionId);
       formDataToSend.append('amount', formData.amount);
 
       // 🔹 SLIP FILE
@@ -320,13 +316,13 @@ const Payment = () => {
             </span>
           </h1>
           <p className="payment-subtitle">
-            {paymentStatus === 'success' 
+            {paymentStatus === 'success'
               ? 'Your registration is complete. Redirecting to home page...'
               : paymentStatus === 'processing'
-              ? 'Processing your payment...'
-              : paymentStatus === 'error'
-              ? 'Payment Error'
-              : 'Choose your preferred payment method'}
+                ? 'Processing your payment...'
+                : paymentStatus === 'error'
+                  ? 'Payment Error'
+                  : 'Choose your preferred payment method'}
           </p>
         </div>
 
@@ -337,7 +333,7 @@ const Payment = () => {
               <div className="success-icon">✓</div>
               <h2>Registration Complete!</h2>
               <p className="success-message">Thank you for completing your registration and payment.</p>
-              
+
               <div className="success-details">
                 <h3>Your Registration Details:</h3>
                 <div className="success-item">
@@ -363,8 +359,8 @@ const Payment = () => {
               </div>
 
               <p className="redirect-message">You will be redirected to your home page in a few seconds...</p>
-              <button 
-                className="btn btn-submit" 
+              <button
+                className="btn btn-submit"
                 onClick={() => navigate('/')}
                 style={{ marginTop: '20px', width: '100%' }}
               >
@@ -388,8 +384,8 @@ const Payment = () => {
               <div className="error-icon">✕</div>
               <h2>Payment Failed</h2>
               <p className="error-message">{errorMessage}</p>
-              <button 
-                className="btn btn-cancel" 
+              <button
+                className="btn btn-cancel"
                 onClick={() => setPaymentStatus('method-selection')}
                 style={{ marginTop: '20px' }}
               >
@@ -429,7 +425,7 @@ const Payment = () => {
             </div>
 
             <div className="payment-methods">
-              <div 
+              {/* <div 
                 className="payment-method-card"
                 onClick={() => setPaymentMethod('card')}
               >
@@ -437,9 +433,9 @@ const Payment = () => {
                 <h3>Credit/Debit Card</h3>
                 <p>Pay instantly with your card</p>
                 <button className="btn btn-method">Select Card Payment</button>
-              </div>
+              </div> */}
 
-              <div 
+              <div
                 className="payment-method-card"
                 onClick={() => setPaymentMethod('bank')}
               >
@@ -454,9 +450,9 @@ const Payment = () => {
           // Card Payment Form
           <form className="payment-form" onSubmit={handleCardPayment}>
             <div className="form-header">
-              <button 
-                type="button" 
-                className="btn-back-method" 
+              <button
+                type="button"
+                className="btn-back-method"
                 onClick={() => setPaymentMethod(null)}
               >
                 ← Back to Methods
@@ -556,9 +552,9 @@ const Payment = () => {
                 <button type="submit" className="btn btn-submit">
                   Pay LKR {formData.amount}
                 </button>
-                <button 
-                  type="button" 
-                  className="btn btn-cancel" 
+                <button
+                  type="button"
+                  className="btn btn-cancel"
                   onClick={() => setPaymentMethod(null)}
                 >
                   Cancel
@@ -570,9 +566,9 @@ const Payment = () => {
           // Bank Transfer Form
           <form className="payment-form" onSubmit={handleBankPayment}>
             <div className="form-header">
-              <button 
-                type="button" 
-                className="btn-back-method" 
+              <button
+                type="button"
+                className="btn-back-method"
                 onClick={() => setPaymentMethod(null)}
               >
                 ← Back to Methods
@@ -585,19 +581,23 @@ const Payment = () => {
                 <h4>Bank Account Details</h4>
                 <div className="info-item">
                   <span>Account Holder:</span>
-                  <strong>Gaming Event Organizer</strong>
+                  <strong>Symphony Event LK</strong>
                 </div>
                 <div className="info-item">
                   <span>Account Number:</span>
-                  <strong>XXXX XXXX XXXX 1234</strong>
+                  <strong>8023860717</strong>
                 </div>
-                <div className="info-item">
+                {/* <div className="info-item">
                   <span>IFSC Code:</span>
                   <strong>SBIN0001234</strong>
-                </div>
+                </div> */}
                 <div className="info-item">
                   <span>Bank Name:</span>
-                  <strong>State Bank of India</strong>
+                  <strong>Commercial Bank</strong>
+                </div>
+                <div className="info-item">
+                  <span>Branch:</span>
+                  <strong>Anuradhapura</strong>
                 </div>
                 <div className="info-item">
                   <span>Amount:</span>
@@ -648,32 +648,6 @@ const Payment = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="ifscCode">IFSC Code *</label>
-                  <input
-                    type="text"
-                    id="ifscCode"
-                    name="ifscCode"
-                    value={formData.ifscCode}
-                    onChange={handleInputChange}
-                    placeholder="Enter IFSC code"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="transactionId">Transaction ID *</label>
-                  <input
-                    type="text"
-                    id="transactionId"
-                    name="transactionId"
-                    value={formData.transactionId}
-                    onChange={handleInputChange}
-                    placeholder="Enter transaction ID/Reference"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
                   <label htmlFor="slipFile">Upload Payment Slip *</label>
                   <input
                     type="file"
@@ -692,9 +666,9 @@ const Payment = () => {
                   <button type="submit" className="btn btn-submit">
                     Submit Payment Slip
                   </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-cancel" 
+                  <button
+                    type="button"
+                    className="btn btn-cancel"
                     onClick={() => setPaymentMethod(null)}
                   >
                     Cancel
