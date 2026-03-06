@@ -638,64 +638,6 @@
   box-shadow: 0 0 20px rgba(255, 0, 128, 0.4);
 }
 
-/* Contact Footer */
-.register-footer-info {
-  max-width: 760px;
-  margin: 56px auto 0;
-  padding: 24px 28px;
-  background: linear-gradient(160deg, rgba(34, 44, 98, 0.9), rgba(22, 32, 79, 0.95));
-  border: 1px solid rgba(0, 255, 255, 0.35);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
-  border-radius: 14px;
-}
-
-.register-footer-info h3 {
-  margin: 0 0 18px;
-  color: #ffffff;
-  font-size: 2rem;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-align: center;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.35);
-  padding-bottom: 10px;
-}
-
-.register-contact-list {
-  margin: 0 0 16px;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 8px;
-}
-
-.register-contact-list li {
-  text-align: center;
-}
-
-.register-contact-list a {
-  color: #d9e3ff;
-  text-decoration: none;
-  font-size: 1.02rem;
-}
-
-.register-contact-list a:hover {
-  color: #00ffff;
-}
-
-.register-contact-line {
-  margin: 8px 0;
-  text-align: center;
-  color: #d9e3ff;
-}
-
-.register-contact-line a {
-  color: #8de9ff;
-  text-decoration: none;
-}
-
-.register-contact-line a:hover {
-  text-decoration: underline;
-}
 
 /* Validation States */
 .form-group input:valid:not(:placeholder-shown) {
@@ -749,17 +691,4 @@
     margin-bottom: 20px;
   }
 
-  .register-footer-info {
-    margin-top: 36px;
-    padding: 20px 16px;
-  }
-
-  .register-footer-info h3 {
-    font-size: 1.6rem;
-  }
-
-  .register-contact-list a,
-  .register-contact-line {
-    font-size: 0.95rem;
-  }
 }

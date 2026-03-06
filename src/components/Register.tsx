@@ -472,33 +472,6 @@
             </div>
           )}
 
-          <section className="register-footer-info" aria-label="Contact information">
-            <h3>Contact Us</h3>
-            <ul className="register-contact-list">
-              <li>
-                <a href="tel:+94780005553">+94 78 000 553 - Dulaj Donawaththe</a>
-              </li>
-              <li>
-                <a href="tel:+94718978385">+94 71 897 8385 - Eranda Heshan</a>
-              </li>
-              <li>
-                <a href="tel:+94769363641">+94 76 936 3641 - Adeepa Sasmika</a>
-              </li>
-              <li>
-                <a href="tel:+94776888280">+94 77 688 8280 - Roshitha Vihanga</a>
-              </li>
-              <li>
-                <a href="tel:+94771174362">+94 77 117 4362 - Hinun Kalhara</a>
-              </li>
-            </ul>
-            <p className="register-contact-line">Gmail: contactus.symphonyevents.lk</p>
-            <p className="register-contact-line">
-              Website: <a href="https://symphonyevents.lk" target="_blank" rel="noopener noreferrer">symphonyevents.lk</a>
-            </p>
-            <p className="register-contact-line">
-              Website: <a href="https://ceylonarena.com" target="_blank" rel="noopener noreferrer">ceylonarena.com</a>
-            </p>
-          </section>
         </div>
       </div>
     );
