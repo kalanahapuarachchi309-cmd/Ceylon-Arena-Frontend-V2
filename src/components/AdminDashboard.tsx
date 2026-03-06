@@ -112,9 +112,9 @@ export default function AdminDashboard() {
   ]);
 
   const [events] = useState<Event[]>([
-    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: 'LKR 50,000' },
-    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: 'LKR 75,000' },
-    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: 'LKR 100,000' },
+    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: 'Rs 50,000' },
+    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: 'Rs 75,000' },
+    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: 'Rs 100,000' },
   ]);
 
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -132,7 +132,7 @@ export default function AdminDashboard() {
         phone: p.accountNumber || '',
         game: p.game || '',
         team: p.team || '',
-        amount: `LKR ${
+        amount: `Rs ${
           (typeof p.amount === 'number' ? p.amount : parseFloat(p.amount || 0)).toFixed(2)
         }`,
         paymentDate: p.paymentDate || (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''),
@@ -689,7 +689,7 @@ export default function AdminDashboard() {
                     <div className="kpi-icon">💰</div>
                     <div className="kpi-content">
                       <span className="kpi-label">Total Revenue</span>
-                      <span className="kpi-value">${totalRevenue.toFixed(2)}</span>
+                      <span className="kpi-value">Rs {totalRevenue.toFixed(2)}</span>
                       <span className="kpi-sub">{payments.length} transactions</span>
                     </div>
                   </div>
@@ -697,7 +697,7 @@ export default function AdminDashboard() {
                     <div className="kpi-icon">✅</div>
                     <div className="kpi-content">
                       <span className="kpi-label">Verified Revenue</span>
-                      <span className="kpi-value">${verifiedRevenue.toFixed(2)}</span>
+                      <span className="kpi-value">Rs {verifiedRevenue.toFixed(2)}</span>
                       <span className="kpi-sub">{verifiedPct}% success rate</span>
                     </div>
                   </div>
@@ -705,7 +705,7 @@ export default function AdminDashboard() {
                     <div className="kpi-icon">⏳</div>
                     <div className="kpi-content">
                       <span className="kpi-label">Pending Revenue</span>
-                      <span className="kpi-value">${pendingRevenue.toFixed(2)}</span>
+                      <span className="kpi-value">Rs {pendingRevenue.toFixed(2)}</span>
                       <span className="kpi-sub">{payments.filter(p => p.status === 'pending').length} awaiting review</span>
                     </div>
                   </div>
@@ -713,7 +713,7 @@ export default function AdminDashboard() {
                     <div className="kpi-icon">❌</div>
                     <div className="kpi-content">
                       <span className="kpi-label">Rejected Revenue</span>
-                      <span className="kpi-value">${rejectedRevenue.toFixed(2)}</span>
+                      <span className="kpi-value">Rs {rejectedRevenue.toFixed(2)}</span>
                       <span className="kpi-sub">{payments.filter(p => p.status === 'rejected').length} rejected</span>
                     </div>
                   </div>
@@ -721,7 +721,7 @@ export default function AdminDashboard() {
                     <div className="kpi-icon">📊</div>
                     <div className="kpi-content">
                       <span className="kpi-label">Avg. Payment</span>
-                      <span className="kpi-value">${avgAmount.toFixed(2)}</span>
+                      <span className="kpi-value">Rs {avgAmount.toFixed(2)}</span>
                       <span className="kpi-sub">per registration</span>
                     </div>
                   </div>
@@ -832,16 +832,16 @@ export default function AdminDashboard() {
                             <tr key={game}>
                               <td><span className="excel-game-badge">{game}</span></td>
                               <td>{gp.length}</td>
-                              <td className="excel-amount">${gt.toFixed(2)}</td>
-                              <td className="excel-amount">${gp.length ? (gt/gp.length).toFixed(2) : '0.00'}</td>
+                              <td className="excel-amount">Rs {gt.toFixed(2)}</td>
+                              <td className="excel-amount">Rs {gp.length ? (gt/gp.length).toFixed(2) : '0.00'}</td>
                             </tr>
                           );
                         })}
                         <tr className="breakdown-total">
                           <td><strong>TOTAL</strong></td>
                           <td><strong>{payments.length}</strong></td>
-                          <td className="excel-amount"><strong>${totalRevenue.toFixed(2)}</strong></td>
-                          <td className="excel-amount"><strong>${avgAmount.toFixed(2)}</strong></td>
+                          <td className="excel-amount"><strong>Rs {totalRevenue.toFixed(2)}</strong></td>
+                          <td className="excel-amount"><strong>Rs {avgAmount.toFixed(2)}</strong></td>
                         </tr>
                       </tbody>
                     </table>
@@ -860,7 +860,7 @@ export default function AdminDashboard() {
                             <tr key={method}>
                               <td>{method}</td>
                               <td>{mp.length}</td>
-                              <td className="excel-amount">${mt.toFixed(2)}</td>
+                              <td className="excel-amount">Rs {mt.toFixed(2)}</td>
                               <td>
                                 <div className="share-bar"><div className="share-fill" style={{width:`${share}%`}}></div></div>
                                 <span style={{fontSize:'0.75rem',color:'rgba(255,255,255,0.6)'}}>{share}%</span>
@@ -885,7 +885,7 @@ export default function AdminDashboard() {
                             <tr key={status}>
                               <td><span className={`payment-status-badge ${status}`}>{status==='verified'?'✅ Verified':status==='pending'?'⏳ Pending':'❌ Rejected'}</span></td>
                               <td>{sp.length}</td>
-                              <td className="excel-amount">${st.toFixed(2)}</td>
+                              <td className="excel-amount">Rs {st.toFixed(2)}</td>
                               <td>{pct}%</td>
                             </tr>
                           );
@@ -893,7 +893,7 @@ export default function AdminDashboard() {
                         <tr className="breakdown-total">
                           <td><strong>TOTAL</strong></td>
                           <td><strong>{payments.length}</strong></td>
-                          <td className="excel-amount"><strong>${totalRevenue.toFixed(2)}</strong></td>
+                          <td className="excel-amount"><strong>Rs {totalRevenue.toFixed(2)}</strong></td>
                           <td><strong>100%</strong></td>
                         </tr>
                       </tbody>
