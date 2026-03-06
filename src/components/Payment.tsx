@@ -354,7 +354,7 @@ const Payment = () => {
                 </div>
                 <div className="success-item total">
                   <span>Payment Amount:</span>
-                  <strong>LKR 1,500</strong>
+                  <strong>Rs 1,500</strong>
                 </div>
               </div>
 
@@ -420,7 +420,7 @@ const Payment = () => {
               </div>
               <div className="summary-total">
                 <span>💰 Amount to Pay:</span>
-                <strong>LKR 1,500</strong>
+                <strong>Rs 1,500</strong>
               </div>
             </div>
 
@@ -536,7 +536,7 @@ const Payment = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="amount">Amount (LKR) *</label>
+                <label htmlFor="amount">Amount (Rs) *</label>
                 <input
                   type="number"
                   id="amount"
@@ -550,7 +550,7 @@ const Payment = () => {
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-submit">
-                  Pay LKR {formData.amount}
+                  Pay Rs {formData.amount}
                 </button>
                 <button
                   type="button"
@@ -601,7 +601,7 @@ const Payment = () => {
                 </div>
                 <div className="info-item">
                   <span>Amount:</span>
-                  <strong>LKR 1,500</strong>
+                  <strong>Rs 1,500</strong>
                 </div>
               </div>
 

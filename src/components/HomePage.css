@@ -2108,13 +2108,19 @@ body {
   transition: color 0.25s, transform 0.25s;
 }
 
+.contact-social-icon.instagram { color: #e4405f; }
+.contact-social-icon.facebook { color: #1877f2; }
+.contact-social-icon.twitter { color: #1da1f2; }
+.contact-social-icon.discord { color: #5865f2; }
+.contact-social-icon.twitch { color: #9146ff; }
+
 .contact-social-icon svg {
   width: 20px;
   height: 20px;
 }
 
 .contact-social-icon:hover {
-  color: #00ffff;
+  color: #ffffff;
   transform: translateY(-3px);
 }
 

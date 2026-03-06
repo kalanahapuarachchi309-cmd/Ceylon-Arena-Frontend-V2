@@ -11,7 +11,13 @@ import slide02 from '../assets/image/slide_show/slid_show_02.webp';
 import slide04 from '../assets/image/slide_show/slid_show_04.jpg';
 import slide05 from '../assets/image/slide_show/slid_show_05.webp';
 import slide06 from '../assets/image/slide_show/slid_show_06.png';
-import { Target, Trophy, Lightbulb } from "lucide-react";
+import {
+  Target,
+  Trophy,
+  Lightbulb,
+  Instagram,
+  Facebook
+} from 'lucide-react';
 import './HomePage.css';
 
 export default function HomePage() {
@@ -387,20 +393,24 @@ export default function HomePage() {
         <div className="container">
           <div className="stats-grid">
             <div className="stat-item">
-              <h3>5,000+</h3>
-              <p>Active Players</p>
+              <h3>LKR 400,000</h3>
+              <p>Champions</p>
             </div>
             <div className="stat-item">
-              <h3>250+</h3>
-              <p>Tournaments</p>
+              <h3>LKR 250,000</h3>
+              <p>Runner Up</p>
             </div>
             <div className="stat-item">
-              <h3>LKR 1300K+</h3>
-              <p>Prize Money</p>
+              <h3>LKR 5,000</h3>
+              <p>Gift Pack for Last 100 Players (Last 25 Teams)</p>
             </div>
             <div className="stat-item">
-              <h3>50+</h3>
-              <p>Pro Teams</p>
+              <h3>LKR 1,000</h3>
+              <p>Gift Pack for First 400 Registered Players</p>
+            </div>
+            <div className="stat-item">
+              <h3>Store</h3>
+              <p>Not Urgent</p>
             </div>
           </div>
         </div>
@@ -536,63 +546,30 @@ export default function HomePage() {
 
               <a
                 href="https://www.instagram.com/ceylonarena?igsh=MWd4djJ0NmUxa3QwcQ=="
-                className="contact-social-icon"
+                className="contact-social-icon instagram"
                 aria-label="Instagram"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07..." />
-                </svg>
+                <Instagram size={20} />
               </a>
 
               <a
                 href="https://www.facebook.com/share/1JsvmDPe6W/?mibextid=wwXIfr"
-                className="contact-social-icon"
+                className="contact-social-icon facebook"
                 aria-label="Facebook"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M24 12.073C24 5.405 18.627 0..." />
-                </svg>
+                <Facebook size={20} />
               </a>
 
-              <a
-                href="#"
-                className="contact-social-icon"
-                aria-label="Twitter"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M18.244 2.25h3.308..." />
-                </svg>
-              </a>
+             
 
-              <a
-                href="#"
-                className="contact-social-icon"
-                aria-label="Discord"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20.317 4.37a19.791..." />
-                </svg>
-              </a>
-
-              <a
-                href="#"
-                className="contact-social-icon"
-                aria-label="Twitch"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.571 4.714h1.715..." />
-                </svg>
-              </a>
+             
+             
+              
+              
             </div>
           </div>
 
@@ -641,13 +618,9 @@ export default function HomePage() {
           {/* ── ADDRESS ── */}
           <div className="footer-col">
             <h4 className="footer-col-title">ADDRESS</h4>
-            <p className="footer-col-heading">COLOMBO HQ</p>
-            <p>60 Galle Road</p>
-            <p>Colombo 03</p>
-            <p>Sri Lanka</p>
-            <p className="footer-col-heading" style={{ marginTop: '18px' }}>KANDY ARENA</p>
-            <p>14 Dalada Veediya</p>
-            <p>Kandy</p>
+            <p className="footer-col-heading">No : 475,</p>
+            <p>Deniyawatta Road,</p>
+            <p>Battaramulla,</p>
             <p>Sri Lanka</p>
           </div>
 
@@ -656,7 +629,7 @@ export default function HomePage() {
             <h4 className="footer-col-title">SOCIALS</h4>
 
             <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
-              DISCORD
+             
             </a>
 
             <a
@@ -669,11 +642,11 @@ export default function HomePage() {
             </a>
 
             <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
-              YOUTUBE
+              
             </a>
 
             <a href="#" className="footer-link" target="_blank" rel="noopener noreferrer">
-              TWITTER / X
+              
             </a>
 
             <a
@@ -690,9 +663,18 @@ export default function HomePage() {
           <div className="footer-col">
             <h4 className="footer-col-title">CONTACT</h4>
             <p>INFO@CEYLON-ARENA.LK</p>
-            <p>+94 11 234 5678</p>
-            <p style={{ marginTop: '12px' }}>CEYLON ARENA PVT LTD</p>
-            <p>REG: PV 00123456</p>
+            <p>Website : symphonyevents.lk</p>
+            <p>+94 77 8000 553 - Dulaj Dodawaththe</p>
+            <p>+94 71 8978 385 - Eranda Heshan</p>
+            <p>+94 76 9363 641 - Adeepa Sasmika</p>
+            <p>+94 77 8688 280 - Roshitha Vihanga</p>
+            <p>+94 77 1174 362 - Hirun Kalhara</p>
+
+            <p>Gmail : contactus.symphonyevents.lk</p>
+
+            <p>Website : symphonyevents.lk</p>
+            <p>Website : ceylonarena.com</p>
+            
           </div>
 
           {/* ── PAGES ── */}
