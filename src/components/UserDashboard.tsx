@@ -16,6 +16,7 @@ interface IGame {
 }
 
 interface IUser {
+  _id?: string;
   createdAt?: string;
   status?: boolean;
   role?: string;
@@ -34,7 +35,7 @@ interface IUser {
     assists: number;
     topTenFinishes: number;
     totalMatches: number;
-    averagePlacement: number;
+    averagePlacement?: number;
   };
 }
 
@@ -107,6 +108,7 @@ const UserDashboard: React.FC = () => {
               game: g.game || '',
               gameId: g.gameId || '',
               teamName: g.teamName || '',
+              player1Name: profile.playerName || userData.playerName || '',
               player2Name: g.player2Name || '',
               player3Name: g.player3Name || '',
               player4Name: g.player4Name || '',
@@ -153,7 +155,6 @@ const UserDashboard: React.FC = () => {
   const kdr = user.stats.deaths > 0
     ? (user.stats.kills / user.stats.deaths).toFixed(2)
     : '0.00';
-  const safeTotalMatches = user.stats.totalMatches > 0 ? user.stats.totalMatches : 1;
   // const lossRate = ((user.stats.losses / user.stats.totalMatches) * 100).toFixed(1);
 
   const teamComparison = useMemo(() => {
@@ -168,6 +169,9 @@ const UserDashboard: React.FC = () => {
       color: colors[index % colors.length],
     }));
   }, [user.games, user.stats.kills, user.stats.averagePlacement, winRate]);
+
+  const safeTotalMatches = Math.max(user.stats.totalMatches, 1);
+  const safeKills = Math.max(user.stats.kills, 1);
 
   return (
     <div className="user-dashboard">
@@ -378,7 +382,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div
                             className="progress-fill deaths-fill"
-                            style={{width: `${user.stats.kills > 0 ? (user.stats.deaths / user.stats.kills) * 100 : 0}%`}}
+                            style={{width: `${safeKills ? (user.stats.deaths / safeKills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -390,7 +394,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div
                             className="progress-fill assists-fill"
-                            style={{width: `${user.stats.kills > 0 ? (user.stats.assists / user.stats.kills) * 100 : 0}%`}}
+                            style={{width: `${safeKills ? (user.stats.assists / safeKills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -402,7 +406,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div
                             className="progress-fill top10-fill"
-                            style={{width: `${user.stats.totalMatches > 0 ? (user.stats.topTenFinishes / user.stats.totalMatches) * 100 : 0}%`}}
+                            style={{width: `${(user.stats.topTenFinishes / safeTotalMatches) * 100}%`}}
                           ></div>
                         </div>
                       </div>
