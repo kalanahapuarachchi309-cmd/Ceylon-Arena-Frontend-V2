@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 interface Team {
   id: string;
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [adminName, setAdminName] = useState<string>('Admin');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'verified' | 'pending' | 'rejected'>('all');
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
     // Load admin data from localStorage
@@ -86,38 +87,54 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Sample data
-  const [teams] = useState<Team[]>([
-    { id: '1', name: 'Thunder Warriors', wins: 8, losses: 2, totalMatches: 10, status: 'winner' },
-    { id: '2', name: 'Phoenix Squad', wins: 6, losses: 4, totalMatches: 10, status: 'active' },
-    { id: '3', name: 'Silent Assassins', wins: 0, losses: 5, totalMatches: 5, status: 'no-win' },
-    { id: '4', name: 'Neon Knights', wins: 7, losses: 3, totalMatches: 10, status: 'winner' },
-    { id: '5', name: 'Cyber Legends', wins: 0, losses: 3, totalMatches: 3, status: 'no-win' },
-  ]);
+  const teams = useMemo<Team[]>(() => {
+    const grouped = new Map<string, { wins: number; losses: number; total: number }>();
 
-  const [leaders] = useState<Leader[]>([
-    { id: '1', name: 'Alex Lightning', wins: 12, matches: 15, winRate: 80 },
-    { id: '2', name: 'Shadow Master', wins: 10, matches: 14, winRate: 71 },
-    { id: '3', name: 'Phoenix Rising', wins: 9, matches: 12, winRate: 75 },
-    { id: '4', name: 'Cyber King', wins: 8, matches: 11, winRate: 73 },
-    { id: '5', name: 'Titan Blaze', wins: 7, matches: 10, winRate: 70 },
-  ]);
+    payments.forEach((p) => {
+      const name = p.team?.trim() || 'Unassigned Team';
+      const current = grouped.get(name) || { wins: 0, losses: 0, total: 0 };
+      current.total += 1;
+      if (p.status === 'verified') current.wins += 1;
+      if (p.status === 'rejected') current.losses += 1;
+      grouped.set(name, current);
+    });
 
-  const [teammates] = useState<Teammate[]>([
-    { id: '1', name: 'Player One', team: 'Thunder Warriors', kills: 245, deaths: 34, assists: 67 },
-    { id: '2', name: 'Player Two', team: 'Thunder Warriors', kills: 198, deaths: 45, assists: 52 },
-    { id: '3', name: 'Player Three', team: 'Phoenix Squad', kills: 210, deaths: 38, assists: 71 },
-    { id: '4', name: 'Player Four', team: 'Neon Knights', kills: 189, deaths: 42, assists: 48 },
-    { id: '5', name: 'Player Five', team: 'Silent Assassins', kills: 67, deaths: 156, assists: 12 },
-  ]);
+    return Array.from(grouped.entries()).map(([name, value], index) => ({
+      id: String(index + 1),
+      name,
+      wins: value.wins,
+      losses: value.losses,
+      totalMatches: value.total,
+      status: value.wins > 0 ? 'winner' : value.total > 0 ? 'active' : 'no-win',
+    }));
+  }, [payments]);
 
-  const [events] = useState<Event[]>([
-    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: 'Rs 50,000' },
-    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: 'Rs 75,000' },
-    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: 'Rs 100,000' },
-  ]);
+  const leaders = useMemo<Leader[]>(() => {
+    const grouped = new Map<string, { wins: number; matches: number }>();
 
-  const [payments, setPayments] = useState<Payment[]>([]);
+    payments.forEach((p) => {
+      const name = p.playerName?.trim() || 'Unknown Player';
+      const current = grouped.get(name) || { wins: 0, matches: 0 };
+      current.matches += 1;
+      if (p.status === 'verified') current.wins += 1;
+      grouped.set(name, current);
+    });
+
+    return Array.from(grouped.entries())
+      .map(([name, value], index) => ({
+        id: String(index + 1),
+        name,
+        wins: value.wins,
+        matches: value.matches,
+        winRate: value.matches > 0 ? Math.round((value.wins / value.matches) * 100) : 0,
+      }))
+      .sort((a, b) => b.wins - a.wins)
+      .slice(0, 10);
+  }, [payments]);
+
+  const teammates: Teammate[] = [];
+
+  const events: Event[] = [];
 
   // Fetch payments from backend and map to frontend Payment shape
   const fetchPayments = async (page = 1, limit = 10) => {
@@ -138,7 +155,12 @@ export default function AdminDashboard() {
         paymentDate: p.paymentDate || (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''),
         paymentMethod: p.paymentMethod === 'BANK' ? 'Bank Transfer' : p.paymentMethod || '',
         transactionId: p.transactionId || '',
-        status: (String(p.status || '').toLowerCase() === 'verified' ? 'verified' : String(p.status || '').toLowerCase() === 'rejected' ? 'rejected' : 'pending'),
+        status: (() => {
+          const normalized = String(p.status || '').toUpperCase();
+          if (normalized === 'COMPLETED' || normalized === 'VERIFIED') return 'verified';
+          if (normalized === 'FAILED' || normalized === 'REJECTED') return 'rejected';
+          return 'pending';
+        })(),
         paymentSlipUrl: p.slipFilePath || p.paymentSlipUrl || '',
         registeredAt: p.createdAt ? new Date(p.createdAt).toLocaleString() : (p.registeredAt || ''),
       }));
@@ -153,17 +175,36 @@ export default function AdminDashboard() {
     fetchPayments();
   }, []);
 
-  const [tournaments] = useState<Tournament[]>([
-    { id: '1', name: 'Free Fire Battle Royale Season 1', game: 'Free Fire', totalTeams: 32, winnerId: '1', status: 'finished', startDate: '2026-01-10' },
-    { id: '2', name: 'PUBG Squad Championship', game: 'PUBG', totalTeams: 16, winnerId: '4', status: 'finished', startDate: '2026-01-15' },
-    { id: '3', name: 'Valorant Esports League', game: 'Valorant', totalTeams: 24, status: 'live', startDate: '2026-02-01' },
-  ]);
+  const updatePaymentStatus = async (paymentId: string, status: 'COMPLETED' | 'FAILED') => {
+    try {
+      const res = await fetch(API_ENDPOINTS.PAYMENTS.STATUS(paymentId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      await fetchPayments();
+      setSelectedPayment(null);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  const tournaments: Tournament[] = [];
 
   // Statistics
   const totalTeams = teams.length;
   const teamsWithWins = teams.filter(t => t.wins > 0).length;
   const teamsWithoutWins = teams.filter(t => t.wins === 0).length;
-  const totalMatches = teams.reduce((sum, t) => sum + t.totalMatches, 0) / teams.length;
+  const totalMatches = teams.length > 0
+    ? teams.reduce((sum, t) => sum + t.totalMatches, 0) / teams.length
+    : 0;
   const totalEvents = events.length;
   const activeTournaments = tournaments.filter(t => t.status === 'live').length;
 
@@ -983,8 +1024,18 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="modal-action-buttons">
-                  <button className="modal-action-btn verify" onClick={() => setSelectedPayment(null)}>✅ Verify</button>
-                  <button className="modal-action-btn reject" onClick={() => setSelectedPayment(null)}>❌ Reject</button>
+                  <button
+                    className="modal-action-btn verify"
+                    onClick={() => updatePaymentStatus(selectedPayment.id, 'COMPLETED')}
+                  >
+                    ✅ Verify
+                  </button>
+                  <button
+                    className="modal-action-btn reject"
+                    onClick={() => updatePaymentStatus(selectedPayment.id, 'FAILED')}
+                  >
+                    ❌ Reject
+                  </button>
                   <button className="modal-action-btn download">⬇️ Download</button>
                 </div>
               </div>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UserDashboard.css';
+import { API_ENDPOINTS } from '../config/api';
 
 interface IGame {
   game: string;
@@ -13,11 +14,15 @@ interface IGame {
 }
 
 interface IUser {
+  createdAt?: string;
+  status?: boolean;
+  role?: string;
   playerName: string;
   email: string;
   phone: string;
   promoCode?: string;
   address: string;
+  accountStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
   games: IGame[];
   stats: {
     totalMatches: number;
@@ -35,68 +40,132 @@ const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'games' | 'stats'>('stats');
   const [user, setUser] = useState<IUser>({
-    playerName: "SHADOW KILLER",
-    email: "shadow@freefire.com",
-    phone: "+1 (555) 999-8888",
-    promoCode: "FF2026PRO",
-    address: "Battle Arena, Victory Street",
+    status: false,
+    role: 'USER',
+    playerName: "",
+    email: "",
+    phone: "",
+    promoCode: "",
+    address: "",
+    accountStatus: 'PENDING',
     stats: {
-      totalMatches: 150,
-      wins: 45,
-      losses: 105,
-      kills: 1250,
-      deaths: 380,
-      assists: 290,
-      topTenFinishes: 89,
-      averagePlacement: 12.5
+      totalMatches: 0,
+      wins: 0,
+      losses: 0,
+      kills: 0,
+      deaths: 0,
+      assists: 0,
+      topTenFinishes: 0,
+      averagePlacement: 0
     },
-    games: [
-      {
-        game: "Free Fire",
-        gameId: "FF2026001",
-        teamName: "Shadow Legends",
-        player1Name: "Shadow Killer",
-        player2Name: "Night Hunter",
-        player3Name: "Storm Breaker",
-        player4Name: "Phoenix Rider"
-      }
-    ]
+    games: []
   });
 
   useEffect(() => {
-    // Load user data from localStorage
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    const loadUserProfile = async () => {
+      const userStr = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+
+      if (!userStr) {
+        navigate('/login');
+        return;
+      }
+
       try {
         const userData = JSON.parse(userStr);
+
         setUser(prevUser => ({
           ...prevUser,
           playerName: userData.playerName || prevUser.playerName,
           email: userData.email || prevUser.email,
-          phone: userData.phone || prevUser.phone,
-          promoCode: userData.promocode || prevUser.promoCode,
-          address: userData.leaderAddress || prevUser.address
+          role: userData.role || prevUser.role,
+          status: typeof userData.status === 'boolean' ? userData.status : prevUser.status,
+          accountStatus: userData.accountStatus || prevUser.accountStatus,
+        }));
+
+        if (!userData.id) {
+          return;
+        }
+
+        const res = await fetch(API_ENDPOINTS.USERS.ME(userData.id), {
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const profile = data?.user;
+
+        if (!profile) return;
+
+        const games: IGame[] = Array.isArray(profile.games)
+          ? profile.games.map((g: any) => ({
+              game: g.game || '',
+              gameId: g.gameId || '',
+              teamName: g.teamName || '',
+              player1Name: profile.playerName || userData.playerName || '',
+              player2Name: g.player2Name || '',
+              player3Name: g.player3Name || '',
+              player4Name: g.player4Name || '',
+            }))
+          : [];
+
+        const apiStats = profile.stats || {};
+        const mappedStats = {
+          totalMatches: Number(apiStats.totalMatches ?? games.length ?? 0),
+          wins: Number(apiStats.wins ?? 0),
+          losses: Number(apiStats.losses ?? 0),
+          kills: Number(apiStats.kills ?? 0),
+          deaths: Number(apiStats.deaths ?? 0),
+          assists: Number(apiStats.assists ?? 0),
+          topTenFinishes: Number(apiStats.topTenFinishes ?? 0),
+          averagePlacement: Number(apiStats.averagePlacement ?? 0),
+        };
+
+        setUser(prevUser => ({
+          ...prevUser,
+          playerName: profile.playerName || prevUser.playerName,
+          email: profile.email || prevUser.email,
+          phone: profile.phone || prevUser.phone,
+          promoCode: profile.promoCode || prevUser.promoCode,
+          address: profile.address || prevUser.address,
+          status: typeof profile.status === 'boolean' ? profile.status : prevUser.status,
+          role: profile.role || prevUser.role,
+          accountStatus: profile.accountStatus || prevUser.accountStatus,
+          createdAt: profile.createdAt || prevUser.createdAt,
+          games,
+          stats: mappedStats,
         }));
       } catch (error) {
-        console.error('Error loading user data:', error);
+        console.error('Error loading user profile:', error);
       }
-    }
+    };
+
+    loadUserProfile();
   }, []);
 
-  const winRate = ((user.stats.wins / user.stats.totalMatches) * 100).toFixed(1);
-  const kdr = (user.stats.kills / user.stats.deaths).toFixed(2);
+  const winRate = user.stats.totalMatches > 0
+    ? ((user.stats.wins / user.stats.totalMatches) * 100).toFixed(1)
+    : '0.0';
+  const kdr = user.stats.deaths > 0
+    ? (user.stats.kills / user.stats.deaths).toFixed(2)
+    : '0.00';
   // const lossRate = ((user.stats.losses / user.stats.totalMatches) * 100).toFixed(1);
 
-  // Team comparison data (mock data for demonstration)
-  const teamComparison = [
-    { team: "Shadow Legends", winRate: 30, kills: 1250, avgPlacement: 12.5, color: "#ff0080" },
-    { team: "Storm Riders", winRate: 28, kills: 1180, avgPlacement: 14.2, color: "#00ffff" },
-    { team: "Night Hawks", winRate: 25, kills: 1050, avgPlacement: 15.8, color: "#ffd93d" },
-    { team: "Fire Dragons", winRate: 22, kills: 980, avgPlacement: 17.3, color: "#ff00ff" },
-    { team: "Ice Warriors", winRate: 20, kills: 890, avgPlacement: 18.9, color: "#00d4ff" }
-  ];
+  const teamComparison = useMemo(() => {
+    const colors = ['#ff0080', '#00ffff', '#ffd93d', '#ff00ff', '#00d4ff'];
+    if (user.games.length === 0) return [] as Array<{ team: string; winRate: number; kills: number; avgPlacement: number; color: string }>;
 
-  // const maxKills = Math.max(...teamComparison.map(t => t.kills));
+    return user.games.map((game, index) => ({
+      team: game.teamName || `Team ${index + 1}`,
+      winRate: Number(winRate),
+      kills: user.stats.kills,
+      avgPlacement: user.stats.averagePlacement,
+      color: colors[index % colors.length],
+    }));
+  }, [user.games, user.stats.kills, user.stats.averagePlacement, winRate]);
 
   return (
     <div className="user-dashboard">
@@ -305,9 +374,9 @@ const UserDashboard: React.FC = () => {
                           <span className="combat-stat-value">{user.stats.deaths}</span>
                         </div>
                         <div className="progress-bar">
-                          <div 
-                            className="progress-fill deaths-fill" 
-                            style={{width: `${(user.stats.deaths / user.stats.kills) * 100}%`}}
+                          <div
+                            className="progress-fill deaths-fill"
+                            style={{width: `${user.stats.kills > 0 ? (user.stats.deaths / user.stats.kills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -317,9 +386,9 @@ const UserDashboard: React.FC = () => {
                           <span className="combat-stat-value">{user.stats.assists}</span>
                         </div>
                         <div className="progress-bar">
-                          <div 
-                            className="progress-fill assists-fill" 
-                            style={{width: `${(user.stats.assists / user.stats.kills) * 100}%`}}
+                          <div
+                            className="progress-fill assists-fill"
+                            style={{width: `${user.stats.kills > 0 ? (user.stats.assists / user.stats.kills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -329,9 +398,9 @@ const UserDashboard: React.FC = () => {
                           <span className="combat-stat-value">{user.stats.topTenFinishes}</span>
                         </div>
                         <div className="progress-bar">
-                          <div 
-                            className="progress-fill top10-fill" 
-                            style={{width: `${(user.stats.topTenFinishes / user.stats.totalMatches) * 100}%`}}
+                          <div
+                            className="progress-fill top10-fill"
+                            style={{width: `${user.stats.totalMatches > 0 ? (user.stats.topTenFinishes / user.stats.totalMatches) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -464,15 +533,17 @@ const UserDashboard: React.FC = () => {
                   <div className="status-grid">
                     <div className="status-item">
                       <span className="status-title">Account Status</span>
-                      <span className="status-badge active">Active</span>
+                      <span className="status-badge active">{user.status ? 'Active' : 'Inactive'}</span>
                     </div>
                     <div className="status-item">
                       <span className="status-title">Member Since</span>
-                      <span className="status-value">January 2026</span>
+                      <span className="status-value">
+                        {user.createdAt ? new Date(user.createdAt).toISOString().split("T")[0] : "N/A"}
+                      </span>
                     </div>
                     <div className="status-item">
                       <span className="status-title">Account Tier</span>
-                      <span className="status-badge premium">Premium</span>
+                      <span className="status-badge premium">{user.role || 'USER'}</span>
                     </div>
                   </div>
                 </div>
