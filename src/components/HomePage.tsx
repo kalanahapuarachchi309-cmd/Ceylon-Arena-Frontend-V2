@@ -84,6 +84,15 @@ export default function HomePage() {
               <li className="mobile-only">
                 <button
                   className="btn btn-secondary"
+                  onClick={() => { navigate('/sign'); closeMobileMenu(); }}
+                  style={{ width: '100%' }}
+                >
+                  Sign In
+                </button>
+              </li>
+              <li className="mobile-only">
+                <button
+                  className="btn btn-secondary"
                   onClick={() => { navigate('/register'); closeMobileMenu(); }}
                   style={{ width: '100%' }}
                 >
