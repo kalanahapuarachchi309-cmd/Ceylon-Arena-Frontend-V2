@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './AdminDashboard.css';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
 interface Team {
   id: string;
@@ -70,6 +70,7 @@ export default function AdminDashboard() {
   const [adminName, setAdminName] = useState<string>('Admin');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'verified' | 'pending' | 'rejected'>('all');
+  const [payments, setPayments] = useState<Payment[]>([]);
 
   useEffect(() => {
     // Load admin data from localStorage
@@ -86,15 +87,54 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const [teams] = useState<Team[]>([]);
+  const teams = useMemo<Team[]>(() => {
+    const grouped = new Map<string, { wins: number; losses: number; total: number }>();
 
-  const [leaders] = useState<Leader[]>([]);
+    payments.forEach((p) => {
+      const name = p.team?.trim() || 'Unassigned Team';
+      const current = grouped.get(name) || { wins: 0, losses: 0, total: 0 };
+      current.total += 1;
+      if (p.status === 'verified') current.wins += 1;
+      if (p.status === 'rejected') current.losses += 1;
+      grouped.set(name, current);
+    });
 
-  const [teammates] = useState<Teammate[]>([]);
+    return Array.from(grouped.entries()).map(([name, value], index) => ({
+      id: String(index + 1),
+      name,
+      wins: value.wins,
+      losses: value.losses,
+      totalMatches: value.total,
+      status: value.wins > 0 ? 'winner' : value.total > 0 ? 'active' : 'no-win',
+    }));
+  }, [payments]);
 
-  const [events] = useState<Event[]>([]);
+  const leaders = useMemo<Leader[]>(() => {
+    const grouped = new Map<string, { wins: number; matches: number }>();
 
-  const [payments, setPayments] = useState<Payment[]>([]);
+    payments.forEach((p) => {
+      const name = p.playerName?.trim() || 'Unknown Player';
+      const current = grouped.get(name) || { wins: 0, matches: 0 };
+      current.matches += 1;
+      if (p.status === 'verified') current.wins += 1;
+      grouped.set(name, current);
+    });
+
+    return Array.from(grouped.entries())
+      .map(([name, value], index) => ({
+        id: String(index + 1),
+        name,
+        wins: value.wins,
+        matches: value.matches,
+        winRate: value.matches > 0 ? Math.round((value.wins / value.matches) * 100) : 0,
+      }))
+      .sort((a, b) => b.wins - a.wins)
+      .slice(0, 10);
+  }, [payments]);
+
+  const teammates: Teammate[] = [];
+
+  const events: Event[] = [];
 
   // Fetch payments from backend and map to frontend Payment shape
   const fetchPayments = async (page = 1, limit = 10) => {
@@ -115,7 +155,12 @@ export default function AdminDashboard() {
         paymentDate: p.paymentDate || (p.createdAt ? new Date(p.createdAt).toLocaleDateString() : ''),
         paymentMethod: p.paymentMethod === 'BANK' ? 'Bank Transfer' : p.paymentMethod || '',
         transactionId: p.transactionId || '',
-        status: (String(p.status || '').toLowerCase() === 'verified' ? 'verified' : String(p.status || '').toLowerCase() === 'rejected' ? 'rejected' : 'pending'),
+        status: (() => {
+          const normalized = String(p.status || '').toUpperCase();
+          if (normalized === 'COMPLETED' || normalized === 'VERIFIED') return 'verified';
+          if (normalized === 'FAILED' || normalized === 'REJECTED') return 'rejected';
+          return 'pending';
+        })(),
         paymentSlipUrl: p.slipFilePath || p.paymentSlipUrl || '',
         registeredAt: p.createdAt ? new Date(p.createdAt).toLocaleString() : (p.registeredAt || ''),
       }));
@@ -130,7 +175,28 @@ export default function AdminDashboard() {
     fetchPayments();
   }, []);
 
-  const [tournaments] = useState<Tournament[]>([]);
+  const updatePaymentStatus = async (paymentId: string, status: 'COMPLETED' | 'FAILED') => {
+    try {
+      const res = await fetch(API_ENDPOINTS.PAYMENTS.STATUS(paymentId), {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      await fetchPayments();
+      setSelectedPayment(null);
+    } catch (error) {
+      console.error('Error updating payment status:', error);
+    }
+  };
+
+  const tournaments: Tournament[] = [];
 
   // Statistics
   const totalTeams = teams.length;
@@ -1005,8 +1071,18 @@ export default function AdminDashboard() {
                   />
                 </div>
                 <div className="modal-action-buttons">
-                  <button className="modal-action-btn verify" onClick={() => setSelectedPayment(null)}>✅ Verify</button>
-                  <button className="modal-action-btn reject" onClick={() => setSelectedPayment(null)}>❌ Reject</button>
+                  <button
+                    className="modal-action-btn verify"
+                    onClick={() => updatePaymentStatus(selectedPayment.id, 'COMPLETED')}
+                  >
+                    ✅ Verify
+                  </button>
+                  <button
+                    className="modal-action-btn reject"
+                    onClick={() => updatePaymentStatus(selectedPayment.id, 'FAILED')}
+                  >
+                    ❌ Reject
+                  </button>
                   <button className="modal-action-btn download">⬇️ Download</button>
                 </div>
               </div>
