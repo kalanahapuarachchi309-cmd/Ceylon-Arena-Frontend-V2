@@ -1,100 +1,102 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UserDashboard.css';
+import { API_ENDPOINTS } from '../config/api';
 
 interface IGame {
   game: string;
   gameId: string;
   teamName: string;
-  player1Name: string;
-  player2Name: string;
-  player3Name: string;
-  player4Name: string;
+  player2Name?: string;
+  player2GameId?: string;
+  player3Name?: string;
+  player3GameId?: string;
+  player4Name?: string;
+  player4GameId?: string;
 }
 
 interface IUser {
+  _id: string;
   playerName: string;
   email: string;
   phone: string;
   promoCode?: string;
   address: string;
+  role: string;
+  status?: boolean;
   games: IGame[];
   stats: {
-    totalMatches: number;
     wins: number;
     losses: number;
     kills: number;
     deaths: number;
     assists: number;
     topTenFinishes: number;
-    averagePlacement: number;
+    totalMatches: number;
   };
 }
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'profile' | 'games' | 'stats'>('stats');
-  const [user, setUser] = useState<IUser>({
-    playerName: "SHADOW KILLER",
-    email: "shadow@freefire.com",
-    phone: "+1 (555) 999-8888",
-    promoCode: "FF2026PRO",
-    address: "Battle Arena, Victory Street",
-    stats: {
-      totalMatches: 150,
-      wins: 45,
-      losses: 105,
-      kills: 1250,
-      deaths: 380,
-      assists: 290,
-      topTenFinishes: 89,
-      averagePlacement: 12.5
-    },
-    games: [
-      {
-        game: "Free Fire",
-        gameId: "FF2026001",
-        teamName: "Shadow Legends",
-        player1Name: "Shadow Killer",
-        player2Name: "Night Hunter",
-        player3Name: "Storm Breaker",
-        player4Name: "Phoenix Rider"
-      }
-    ]
-  });
+  const [user, setUser] = useState<IUser>();
 
   useEffect(() => {
-    // Load user data from localStorage
-    const userStr = localStorage.getItem('user');
-    if (userStr) {
+    const loadUser = async () => {
+      const userStr = localStorage.getItem("user");
+      if (!userStr) return;
+
+      const { id } = JSON.parse(userStr);
+
       try {
-        const userData = JSON.parse(userStr);
-        setUser(prevUser => ({
-          ...prevUser,
-          playerName: userData.playerName || prevUser.playerName,
-          email: userData.email || prevUser.email,
-          phone: userData.phone || prevUser.phone,
-          promoCode: userData.promocode || prevUser.promoCode,
-          address: userData.leaderAddress || prevUser.address
-        }));
-      } catch (error) {
-        console.error('Error loading user data:', error);
+        const response = await fetch(API_ENDPOINTS.USERS.GET_BY_ID(id));
+        const data = await response.json();
+
+        if (data.success && data.user) {
+          const backendUser = data.user;
+
+          setUser({
+            _id: backendUser._id,
+            playerName: backendUser.playerName,
+            email: backendUser.email,
+            phone: backendUser.phone,
+            promoCode: backendUser.promoCode,
+            address: backendUser.address,
+            role: backendUser.role,
+            status: backendUser.status,
+            games: backendUser.games.map((g: any) => ({
+              game: g.game,
+              gameId: g.gameId,
+              teamName: g.teamName,
+              player2Name: g.player2Name,
+              player2GameId: g.player2GameId,
+              player3Name: g.player3Name,
+              player3GameId: g.player3GameId,
+              player4Name: g.player4Name,
+              player4GameId: g.player4GameId,
+            })),
+            stats: backendUser.stats || { wins: 0, losses: 0, kills: 0, deaths: 1, assists: 0, topTenFinishes: 0, totalMatches: 1 },
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch user:", err);
       }
-    }
+    };
+
+    loadUser();
   }, []);
 
-  const winRate = ((user.stats.wins / user.stats.totalMatches) * 100).toFixed(1);
-  const kdr = (user.stats.kills / user.stats.deaths).toFixed(2);
+  // ❌ Avoid using user before it's loaded
+  if (!user) return <div>Loading...</div>;
+
+  const safeTotalMatches = user.stats.totalMatches || 1;
+  const safeDeaths = user.stats.deaths || 1;
+  const safeKills = user.stats.kills || 0;
+  const winRate = ((user.stats.wins / safeTotalMatches) * 100).toFixed(1);
+  const kdr = (user.stats.kills / safeDeaths).toFixed(2);
   // const lossRate = ((user.stats.losses / user.stats.totalMatches) * 100).toFixed(1);
 
-  // Team comparison data (mock data for demonstration)
-  const teamComparison = [
-    { team: "Shadow Legends", winRate: 30, kills: 1250, avgPlacement: 12.5, color: "#ff0080" },
-    { team: "Storm Riders", winRate: 28, kills: 1180, avgPlacement: 14.2, color: "#00ffff" },
-    { team: "Night Hawks", winRate: 25, kills: 1050, avgPlacement: 15.8, color: "#ffd93d" },
-    { team: "Fire Dragons", winRate: 22, kills: 980, avgPlacement: 17.3, color: "#ff00ff" },
-    { team: "Ice Warriors", winRate: 20, kills: 890, avgPlacement: 18.9, color: "#00d4ff" }
-  ];
+  const teamComparison: Array<{ team: string; winRate: number; kills: number; color: string }> = [];
 
   // const maxKills = Math.max(...teamComparison.map(t => t.kills));
 
@@ -247,7 +249,7 @@ const UserDashboard: React.FC = () => {
                           fill="none"
                           stroke="#ff0080"
                           strokeWidth="40"
-                          strokeDasharray={`${(user.stats.wins / user.stats.totalMatches) * 502.65} 502.65`}
+                          strokeDasharray={`${(user.stats.wins / safeTotalMatches) * 502.65} 502.65`}
                           transform="rotate(-90 100 100)"
                           className="pie-segment wins"
                         />
@@ -258,8 +260,8 @@ const UserDashboard: React.FC = () => {
                           fill="none"
                           stroke="#00ffff"
                           strokeWidth="40"
-                          strokeDasharray={`${(user.stats.losses / user.stats.totalMatches) * 502.65} 502.65`}
-                          strokeDashoffset={`-${(user.stats.wins / user.stats.totalMatches) * 502.65}`}
+                          strokeDasharray={`${(user.stats.losses / safeTotalMatches) * 502.65} 502.65`}
+                          strokeDashoffset={`-${(user.stats.wins / safeTotalMatches) * 502.65}`}
                           transform="rotate(-90 100 100)"
                           className="pie-segment losses"
                         />
@@ -307,7 +309,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div 
                             className="progress-fill deaths-fill" 
-                            style={{width: `${(user.stats.deaths / user.stats.kills) * 100}%`}}
+                            style={{width: `${safeKills ? (user.stats.deaths / safeKills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -319,7 +321,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div 
                             className="progress-fill assists-fill" 
-                            style={{width: `${(user.stats.assists / user.stats.kills) * 100}%`}}
+                            style={{width: `${safeKills ? (user.stats.assists / safeKills) * 100 : 0}%`}}
                           ></div>
                         </div>
                       </div>
@@ -331,7 +333,7 @@ const UserDashboard: React.FC = () => {
                         <div className="progress-bar">
                           <div 
                             className="progress-fill top10-fill" 
-                            style={{width: `${(user.stats.topTenFinishes / user.stats.totalMatches) * 100}%`}}
+                            style={{width: `${(user.stats.topTenFinishes / safeTotalMatches) * 100}%`}}
                           ></div>
                         </div>
                       </div>
@@ -358,24 +360,30 @@ const UserDashboard: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {teamComparison.map((team, index) => (
-                              <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
-                                <td className="rank-cell">
-                                  <span className="rank-badge" style={{backgroundColor: team.color}}>
-                                    #{index + 1}
-                                  </span>
-                                </td>
-                                <td className="team-cell">{team.team}</td>
-                                <td className="stat-cell">
-                                  <span className="stat-highlight" style={{color: team.color}}>
-                                    {team.winRate}%
-                                  </span>
-                                </td>
-                                <td className="matches-cell">
-                                  {Math.floor(team.kills / 8)}
-                                </td>
+                            {teamComparison.length > 0 ? (
+                              teamComparison.map((team, index) => (
+                                <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
+                                  <td className="rank-cell">
+                                    <span className="rank-badge" style={{backgroundColor: team.color}}>
+                                      #{index + 1}
+                                    </span>
+                                  </td>
+                                  <td className="team-cell">{team.team}</td>
+                                  <td className="stat-cell">
+                                    <span className="stat-highlight" style={{color: team.color}}>
+                                      {team.winRate}%
+                                    </span>
+                                  </td>
+                                  <td className="matches-cell">
+                                    {Math.floor(team.kills / 8)}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} style={{ textAlign: 'center' }}>No team comparison data available.</td>
                               </tr>
-                            ))}
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -395,24 +403,30 @@ const UserDashboard: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {teamComparison.map((team, index) => (
-                              <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
-                                <td className="rank-cell">
-                                  <span className="rank-badge" style={{backgroundColor: team.color}}>
-                                    #{index + 1}
-                                  </span>
-                                </td>
-                                <td className="team-cell">{team.team}</td>
-                                <td className="stat-cell">
-                                  <span className="stat-highlight" style={{color: team.color}}>
-                                    {team.kills}
-                                  </span>
-                                </td>
-                                <td className="matches-cell">
-                                  {(team.kills / Math.floor(team.kills / 8)).toFixed(1)}
-                                </td>
+                            {teamComparison.length > 0 ? (
+                              teamComparison.map((team, index) => (
+                                <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
+                                  <td className="rank-cell">
+                                    <span className="rank-badge" style={{backgroundColor: team.color}}>
+                                      #{index + 1}
+                                    </span>
+                                  </td>
+                                  <td className="team-cell">{team.team}</td>
+                                  <td className="stat-cell">
+                                    <span className="stat-highlight" style={{color: team.color}}>
+                                      {team.kills}
+                                    </span>
+                                  </td>
+                                  <td className="matches-cell">
+                                    {(team.kills / Math.max(Math.floor(team.kills / 8), 1)).toFixed(1)}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} style={{ textAlign: 'center' }}>No team comparison data available.</td>
                               </tr>
-                            ))}
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -464,15 +478,15 @@ const UserDashboard: React.FC = () => {
                   <div className="status-grid">
                     <div className="status-item">
                       <span className="status-title">Account Status</span>
-                      <span className="status-badge active">Active</span>
+                      <span className={`status-badge ${user.status ? 'active' : ''}`}>{user.status ? 'Active' : 'N/A'}</span>
                     </div>
                     <div className="status-item">
                       <span className="status-title">Member Since</span>
-                      <span className="status-value">January 2026</span>
+                      <span className="status-value">N/A</span>
                     </div>
                     <div className="status-item">
                       <span className="status-title">Account Tier</span>
-                      <span className="status-badge premium">Premium</span>
+                      <span className="status-badge premium">{user.role ? user.role.toUpperCase() : 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -499,7 +513,7 @@ const UserDashboard: React.FC = () => {
                           <div className="players-list">
                             <div className="player-slot">
                               <span className="slot-number">1</span>
-                              <span className="player-name">{game.player1Name}</span>
+                              <span className="player-name">{game.gameId}</span>
                             </div>
                             <div className="player-slot">
                               <span className="slot-number">2</span>

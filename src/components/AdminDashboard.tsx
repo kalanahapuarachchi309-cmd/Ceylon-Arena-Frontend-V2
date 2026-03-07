@@ -86,36 +86,13 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Sample data
-  const [teams] = useState<Team[]>([
-    { id: '1', name: 'Thunder Warriors', wins: 8, losses: 2, totalMatches: 10, status: 'winner' },
-    { id: '2', name: 'Phoenix Squad', wins: 6, losses: 4, totalMatches: 10, status: 'active' },
-    { id: '3', name: 'Silent Assassins', wins: 0, losses: 5, totalMatches: 5, status: 'no-win' },
-    { id: '4', name: 'Neon Knights', wins: 7, losses: 3, totalMatches: 10, status: 'winner' },
-    { id: '5', name: 'Cyber Legends', wins: 0, losses: 3, totalMatches: 3, status: 'no-win' },
-  ]);
+  const [teams] = useState<Team[]>([]);
 
-  const [leaders] = useState<Leader[]>([
-    { id: '1', name: 'Alex Lightning', wins: 12, matches: 15, winRate: 80 },
-    { id: '2', name: 'Shadow Master', wins: 10, matches: 14, winRate: 71 },
-    { id: '3', name: 'Phoenix Rising', wins: 9, matches: 12, winRate: 75 },
-    { id: '4', name: 'Cyber King', wins: 8, matches: 11, winRate: 73 },
-    { id: '5', name: 'Titan Blaze', wins: 7, matches: 10, winRate: 70 },
-  ]);
+  const [leaders] = useState<Leader[]>([]);
 
-  const [teammates] = useState<Teammate[]>([
-    { id: '1', name: 'Player One', team: 'Thunder Warriors', kills: 245, deaths: 34, assists: 67 },
-    { id: '2', name: 'Player Two', team: 'Thunder Warriors', kills: 198, deaths: 45, assists: 52 },
-    { id: '3', name: 'Player Three', team: 'Phoenix Squad', kills: 210, deaths: 38, assists: 71 },
-    { id: '4', name: 'Player Four', team: 'Neon Knights', kills: 189, deaths: 42, assists: 48 },
-    { id: '5', name: 'Player Five', team: 'Silent Assassins', kills: 67, deaths: 156, assists: 12 },
-  ]);
+  const [teammates] = useState<Teammate[]>([]);
 
-  const [events] = useState<Event[]>([
-    { id: '1', name: 'Free Fire Championship 2026', date: '2026-02-15', status: 'upcoming', participants: 128, prizePool: 'Rs 50,000' },
-    { id: '2', name: 'PUBG Regional Finals', date: '2026-02-20', status: 'ongoing', participants: 64, prizePool: 'Rs 75,000' },
-    { id: '3', name: 'Valorant Masters', date: '2026-01-25', status: 'completed', participants: 32, prizePool: 'Rs 100,000' },
-  ]);
+  const [events] = useState<Event[]>([]);
 
   const [payments, setPayments] = useState<Payment[]>([]);
 
@@ -153,19 +130,18 @@ export default function AdminDashboard() {
     fetchPayments();
   }, []);
 
-  const [tournaments] = useState<Tournament[]>([
-    { id: '1', name: 'Free Fire Battle Royale Season 1', game: 'Free Fire', totalTeams: 32, winnerId: '1', status: 'finished', startDate: '2026-01-10' },
-    { id: '2', name: 'PUBG Squad Championship', game: 'PUBG', totalTeams: 16, winnerId: '4', status: 'finished', startDate: '2026-01-15' },
-    { id: '3', name: 'Valorant Esports League', game: 'Valorant', totalTeams: 24, status: 'live', startDate: '2026-02-01' },
-  ]);
+  const [tournaments] = useState<Tournament[]>([]);
 
   // Statistics
   const totalTeams = teams.length;
   const teamsWithWins = teams.filter(t => t.wins > 0).length;
   const teamsWithoutWins = teams.filter(t => t.wins === 0).length;
-  const totalMatches = teams.reduce((sum, t) => sum + t.totalMatches, 0) / teams.length;
+  const activeTeams = teams.filter(t => t.status === 'active').length;
+  const totalMatches = teams.length ? teams.reduce((sum, t) => sum + t.totalMatches, 0) / teams.length : 0;
   const totalEvents = events.length;
   const activeTournaments = tournaments.filter(t => t.status === 'live').length;
+  const teamsWithWinsList = teams.filter(t => t.wins > 0);
+  const teamsWithoutWinsList = teams.filter(t => t.wins === 0);
 
   return (
     <div className="admin-dashboard">
@@ -293,11 +269,15 @@ export default function AdminDashboard() {
               <div className="chart-container">
                 <h3>Team Status Distribution</h3>
                 <div className="pie-chart">
-                  <svg viewBox="0 0 200 200" className="pie-svg">
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="#ff0080" strokeWidth="50" strokeDasharray="125 314" strokeDashoffset="0" />
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="#00ffff" strokeWidth="50" strokeDasharray="113 314" strokeDashoffset="-125" />
-                    <circle cx="100" cy="100" r="80" fill="none" stroke="#ff8e53" strokeWidth="50" strokeDasharray="76 314" strokeDashoffset="-238" />
-                  </svg>
+                  {teams.length > 0 ? (
+                    <svg viewBox="0 0 200 200" className="pie-svg">
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#ff0080" strokeWidth="50" strokeDasharray={`${(teamsWithWins / teams.length) * 314} 314`} strokeDashoffset="0" />
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#00ffff" strokeWidth="50" strokeDasharray={`${(activeTeams / teams.length) * 314} 314`} strokeDashoffset={`-${(teamsWithWins / teams.length) * 314}`} />
+                      <circle cx="100" cy="100" r="80" fill="none" stroke="#ff8e53" strokeWidth="50" strokeDasharray={`${(teamsWithoutWins / teams.length) * 314} 314`} strokeDashoffset={`-${((teamsWithWins + activeTeams) / teams.length) * 314}`} />
+                    </svg>
+                  ) : (
+                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No team data available.</p>
+                  )}
                 </div>
                 <div className="chart-legend">
                   <div className="legend-item">
@@ -306,7 +286,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="legend-item">
                     <span className="legend-color" style={{ backgroundColor: '#00ffff' }}></span>
-                    <span>Active: {teamsWithWins}</span>
+                    <span>Active: {activeTeams}</span>
                   </div>
                   <div className="legend-item">
                     <span className="legend-color" style={{ backgroundColor: '#ff8e53' }}></span>
@@ -319,25 +299,29 @@ export default function AdminDashboard() {
               <div className="chart-container">
                 <h3>Top Teams Performance</h3>
                 <div className="bar-chart">
-                  {teams.slice(0, 4).map((team, index) => {
-                    const winRate = (team.wins / team.totalMatches * 100).toFixed(0);
-                    return (
-                      <div key={team.id} className="bar-item">
-                        <div className="bar-label">{team.name.substring(0, 10)}</div>
-                        <div className="bar-container">
-                          <div
-                            className="bar-fill"
-                            style={{
-                              width: `${winRate}%`,
-                              backgroundColor: ['#ff0080', '#00ffff', '#ff8e53', '#a55eea'][index],
-                            }}
-                          >
-                            <span className="bar-value">{winRate}%</span>
+                  {teams.slice(0, 4).length > 0 ? (
+                    teams.slice(0, 4).map((team, index) => {
+                      const winRate = team.totalMatches ? (team.wins / team.totalMatches * 100).toFixed(0) : '0';
+                      return (
+                        <div key={team.id} className="bar-item">
+                          <div className="bar-label">{team.name.substring(0, 10)}</div>
+                          <div className="bar-container">
+                            <div
+                              className="bar-fill"
+                              style={{
+                                width: `${winRate}%`,
+                                backgroundColor: ['#ff0080', '#00ffff', '#ff8e53', '#a55eea'][index],
+                              }}
+                            >
+                              <span className="bar-value">{winRate}%</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })
+                  ) : (
+                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No top team data available.</p>
+                  )}
                 </div>
               </div>
 
@@ -345,24 +329,28 @@ export default function AdminDashboard() {
               <div className="chart-container wide">
                 <h3>Wins vs Losses Distribution</h3>
                 <div className="progress-bars">
-                  {teams.slice(0, 5).map((team) => (
-                    <div key={team.id} className="progress-item">
-                      <div className="progress-header">
-                        <span className="progress-title">{team.name}</span>
-                        <span className="progress-stats">{team.wins}W - {team.losses}L</span>
+                  {teams.slice(0, 5).length > 0 ? (
+                    teams.slice(0, 5).map((team) => (
+                      <div key={team.id} className="progress-item">
+                        <div className="progress-header">
+                          <span className="progress-title">{team.name}</span>
+                          <span className="progress-stats">{team.wins}W - {team.losses}L</span>
+                        </div>
+                        <div className="progress-container">
+                          <div
+                            className="progress-bar wins"
+                            style={{ width: `${team.totalMatches ? (team.wins / team.totalMatches) * 100 : 0}%` }}
+                          ></div>
+                          <div
+                            className="progress-bar losses"
+                            style={{ width: `${team.totalMatches ? (team.losses / team.totalMatches) * 100 : 0}%` }}
+                          ></div>
+                        </div>
                       </div>
-                      <div className="progress-container">
-                        <div
-                          className="progress-bar wins"
-                          style={{ width: `${(team.wins / team.totalMatches) * 100}%` }}
-                        ></div>
-                        <div
-                          className="progress-bar losses"
-                          style={{ width: `${(team.losses / team.totalMatches) * 100}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No wins/losses distribution data available.</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -390,27 +378,33 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {teams.filter(t => t.wins > 0).map((team) => (
-                      <tr key={team.id} className="winner-row">
-                        <td className="team-cell">
-                          <span className="winner-badge">🏅</span>
-                          {team.name}
-                        </td>
-                        <td><span className="badge wins-badge">{team.wins}</span></td>
-                        <td><span className="badge losses-badge">{team.losses}</span></td>
-                        <td>{team.totalMatches}</td>
-                        <td>
-                          <div className="progress-mini">
-                            <div
-                              className="progress-fill"
-                              style={{ width: `${(team.wins / team.totalMatches) * 100}%` }}
-                            ></div>
-                          </div>
-                          {((team.wins / team.totalMatches) * 100).toFixed(0)}%
-                        </td>
-                        <td><span className="status-badge winner">Winner</span></td>
+                    {teamsWithWinsList.length > 0 ? (
+                      teamsWithWinsList.map((team) => (
+                        <tr key={team.id} className="winner-row">
+                          <td className="team-cell">
+                            <span className="winner-badge">🏅</span>
+                            {team.name}
+                          </td>
+                          <td><span className="badge wins-badge">{team.wins}</span></td>
+                          <td><span className="badge losses-badge">{team.losses}</span></td>
+                          <td>{team.totalMatches}</td>
+                          <td>
+                            <div className="progress-mini">
+                              <div
+                                className="progress-fill"
+                                style={{ width: `${team.totalMatches ? (team.wins / team.totalMatches) * 100 : 0}%` }}
+                              ></div>
+                            </div>
+                            {(team.totalMatches ? (team.wins / team.totalMatches) * 100 : 0).toFixed(0)}%
+                          </td>
+                          <td><span className="status-badge winner">Winner</span></td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No team records available.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -430,21 +424,27 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {teams.filter(t => t.wins === 0).map((team) => (
-                      <tr key={team.id} className="no-win-row">
-                        <td className="team-cell">
-                          <span className="no-win-badge">❌</span>
-                          {team.name}
-                        </td>
-                        <td><span className="badge no-wins-badge">0</span></td>
-                        <td><span className="badge losses-badge">{team.losses}</span></td>
-                        <td>{team.totalMatches}</td>
-                        <td><span className="status-badge pending">No Win Yet</span></td>
-                        <td>
-                          <button className="action-btn">Support</button>
-                        </td>
+                    {teamsWithoutWinsList.length > 0 ? (
+                      teamsWithoutWinsList.map((team) => (
+                        <tr key={team.id} className="no-win-row">
+                          <td className="team-cell">
+                            <span className="no-win-badge">❌</span>
+                            {team.name}
+                          </td>
+                          <td><span className="badge no-wins-badge">0</span></td>
+                          <td><span className="badge losses-badge">{team.losses}</span></td>
+                          <td>{team.totalMatches}</td>
+                          <td><span className="status-badge pending">No Win Yet</span></td>
+                          <td>
+                            <button className="action-btn">Support</button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No team records available.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -473,30 +473,36 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {leaders.map((leader, index) => (
-                      <tr key={leader.id} className={`leader-row rank-${index + 1}`}>
-                        <td>
-                          <span className={`rank-badge rank-${index + 1}`}>
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
-                          </span>
-                        </td>
-                        <td className="leader-name">{leader.name}</td>
-                        <td><strong>{leader.wins}</strong></td>
-                        <td>{leader.matches}</td>
-                        <td>
-                          <div className="winrate-bar">
-                            <div className="winrate-fill" style={{ width: `${leader.winRate}%` }}></div>
-                            <span className="winrate-text">{leader.winRate}%</span>
-                          </div>
-                        </td>
-                        <td>
-                          {index === 0 && <span className="achievement-badge">⭐ Legend</span>}
-                          {index === 1 && <span className="achievement-badge">🔥 Elite</span>}
-                          {index === 2 && <span className="achievement-badge">💎 Pro</span>}
-                          {index >= 3 && <span className="achievement-badge">⚡ Veteran</span>}
-                        </td>
+                    {leaders.length > 0 ? (
+                      leaders.map((leader, index) => (
+                        <tr key={leader.id} className={`leader-row rank-${index + 1}`}>
+                          <td>
+                            <span className={`rank-badge rank-${index + 1}`}>
+                              {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                            </span>
+                          </td>
+                          <td className="leader-name">{leader.name}</td>
+                          <td><strong>{leader.wins}</strong></td>
+                          <td>{leader.matches}</td>
+                          <td>
+                            <div className="winrate-bar">
+                              <div className="winrate-fill" style={{ width: `${leader.winRate}%` }}></div>
+                              <span className="winrate-text">{leader.winRate}%</span>
+                            </div>
+                          </td>
+                          <td>
+                            {index === 0 && <span className="achievement-badge">⭐ Legend</span>}
+                            {index === 1 && <span className="achievement-badge">🔥 Elite</span>}
+                            {index === 2 && <span className="achievement-badge">💎 Pro</span>}
+                            {index >= 3 && <span className="achievement-badge">⚡ Veteran</span>}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={6} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No leaderboard data available.</td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -517,25 +523,31 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {teammates.map((teammate) => {
-                      const kdRatio = (teammate.kills / (teammate.deaths || 1)).toFixed(2);
-                      const performance = teammate.kills > 200 ? 'Excellent' : teammate.kills > 100 ? 'Good' : 'Average';
-                      return (
-                        <tr key={teammate.id}>
-                          <td className="player-name">{teammate.name}</td>
-                          <td><span className="team-label">{teammate.team}</span></td>
-                          <td><span className="stat-badge kills">{teammate.kills}</span></td>
-                          <td><span className="stat-badge deaths">{teammate.deaths}</span></td>
-                          <td><span className="stat-badge assists">{teammate.assists}</span></td>
-                          <td><strong>{kdRatio}</strong></td>
-                          <td>
-                            <span className={`performance-badge ${performance.toLowerCase()}`}>
-                              {performance}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {teammates.length > 0 ? (
+                      teammates.map((teammate) => {
+                        const kdRatio = (teammate.kills / (teammate.deaths || 1)).toFixed(2);
+                        const performance = teammate.kills > 200 ? 'Excellent' : teammate.kills > 100 ? 'Good' : 'Average';
+                        return (
+                          <tr key={teammate.id}>
+                            <td className="player-name">{teammate.name}</td>
+                            <td><span className="team-label">{teammate.team}</span></td>
+                            <td><span className="stat-badge kills">{teammate.kills}</span></td>
+                            <td><span className="stat-badge deaths">{teammate.deaths}</span></td>
+                            <td><span className="stat-badge assists">{teammate.assists}</span></td>
+                            <td><strong>{kdRatio}</strong></td>
+                            <td>
+                              <span className={`performance-badge ${performance.toLowerCase()}`}>
+                                {performance}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No player statistics available.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -551,38 +563,42 @@ export default function AdminDashboard() {
 
               <div className="section-card">
                 <div className="events-grid">
-                  {events.map((event) => (
-                    <div key={event.id} className="event-card-admin">
-                      <div className={`event-status-badge ${event.status}`}>
-                        {event.status === 'upcoming' && '📅 Upcoming'}
-                        {event.status === 'ongoing' && '🔴 Ongoing'}
-                        {event.status === 'completed' && '✅ Completed'}
-                      </div>
-                      
-                      <h3 className="event-title">{event.name}</h3>
-                      
-                      <div className="event-details">
-                        <div className="event-detail-item">
-                          <span className="detail-icon">📅</span>
-                          <span>{event.date}</span>
+                  {events.length > 0 ? (
+                    events.map((event) => (
+                      <div key={event.id} className="event-card-admin">
+                        <div className={`event-status-badge ${event.status}`}>
+                          {event.status === 'upcoming' && '📅 Upcoming'}
+                          {event.status === 'ongoing' && '🔴 Ongoing'}
+                          {event.status === 'completed' && '✅ Completed'}
                         </div>
-                        <div className="event-detail-item">
-                          <span className="detail-icon">👥</span>
-                          <span>{event.participants} Participants</span>
-                        </div>
-                        <div className="event-detail-item">
-                          <span className="detail-icon">💰</span>
-                          <span>Prize: {event.prizePool}</span>
-                        </div>
-                      </div>
 
-                      <div className="event-actions">
-                        <button className="btn-event edit">Edit</button>
-                        <button className="btn-event delete">Delete</button>
-                        <button className="btn-event view">View</button>
+                        <h3 className="event-title">{event.name}</h3>
+
+                        <div className="event-details">
+                          <div className="event-detail-item">
+                            <span className="detail-icon">📅</span>
+                            <span>{event.date}</span>
+                          </div>
+                          <div className="event-detail-item">
+                            <span className="detail-icon">👥</span>
+                            <span>{event.participants} Participants</span>
+                          </div>
+                          <div className="event-detail-item">
+                            <span className="detail-icon">💰</span>
+                            <span>Prize: {event.prizePool}</span>
+                          </div>
+                        </div>
+
+                        <div className="event-actions">
+                          <button className="btn-event edit">Edit</button>
+                          <button className="btn-event delete">Delete</button>
+                          <button className="btn-event view">View</button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p style={{ color: 'rgba(255,255,255,0.7)' }}>No events available.</p>
+                  )}
                 </div>
 
                 <div className="add-event-section">
@@ -613,39 +629,45 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {tournaments.map((tournament) => {
-                      const winner = teams.find(t => t.id === tournament.winnerId);
-                      return (
-                        <tr key={tournament.id}>
-                          <td className="tournament-name">{tournament.name}</td>
-                          <td>{tournament.game}</td>
-                          <td><span className="team-count-badge">{tournament.totalTeams}</span></td>
-                          <td>{tournament.startDate}</td>
-                          <td>
-                            <span className={`status-badge ${tournament.status}`}>
-                              {tournament.status === 'registration' && '📝 Registration'}
-                              {tournament.status === 'live' && '🔴 Live'}
-                              {tournament.status === 'finished' && '✅ Finished'}
-                            </span>
-                          </td>
-                          <td>
-                            {winner ? (
-                              <span className="winner-name">
-                                🏆 {winner.name}
+                    {tournaments.length > 0 ? (
+                      tournaments.map((tournament) => {
+                        const winner = teams.find(t => t.id === tournament.winnerId);
+                        return (
+                          <tr key={tournament.id}>
+                            <td className="tournament-name">{tournament.name}</td>
+                            <td>{tournament.game}</td>
+                            <td><span className="team-count-badge">{tournament.totalTeams}</span></td>
+                            <td>{tournament.startDate}</td>
+                            <td>
+                              <span className={`status-badge ${tournament.status}`}>
+                                {tournament.status === 'registration' && '📝 Registration'}
+                                {tournament.status === 'live' && '🔴 Live'}
+                                {tournament.status === 'finished' && '✅ Finished'}
                               </span>
-                            ) : (
-                              <span className="no-winner">-</span>
-                            )}
-                          </td>
-                          <td>
-                            <div className="action-buttons">
-                              <button className="action-btn small">Edit</button>
-                              <button className="action-btn small">Delete</button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                            </td>
+                            <td>
+                              {winner ? (
+                                <span className="winner-name">
+                                  🏆 {winner.name}
+                                </span>
+                              ) : (
+                                <span className="no-winner">-</span>
+                              )}
+                            </td>
+                            <td>
+                              <div className="action-buttons">
+                                <button className="action-btn small">Edit</button>
+                                <button className="action-btn small">Delete</button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={7} style={{ textAlign: 'center', color: 'rgba(255,255,255,0.7)' }}>No tournament data available.</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
 
