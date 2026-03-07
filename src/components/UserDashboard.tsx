@@ -7,10 +7,12 @@ interface IGame {
   game: string;
   gameId: string;
   teamName: string;
-  player1Name: string;
-  player2Name: string;
-  player3Name: string;
-  player4Name: string;
+  player2Name?: string;
+  player2GameId?: string;
+  player3Name?: string;
+  player3GameId?: string;
+  player4Name?: string;
+  player4GameId?: string;
 }
 
 interface IUser {
@@ -25,13 +27,13 @@ interface IUser {
   accountStatus?: 'PENDING' | 'COMPLETED' | 'FAILED';
   games: IGame[];
   stats: {
-    totalMatches: number;
     wins: number;
     losses: number;
     kills: number;
     deaths: number;
     assists: number;
     topTenFinishes: number;
+    totalMatches: number;
     averagePlacement: number;
   };
 }
@@ -105,7 +107,6 @@ const UserDashboard: React.FC = () => {
               game: g.game || '',
               gameId: g.gameId || '',
               teamName: g.teamName || '',
-              player1Name: profile.playerName || userData.playerName || '',
               player2Name: g.player2Name || '',
               player3Name: g.player3Name || '',
               player4Name: g.player4Name || '',
@@ -152,6 +153,7 @@ const UserDashboard: React.FC = () => {
   const kdr = user.stats.deaths > 0
     ? (user.stats.kills / user.stats.deaths).toFixed(2)
     : '0.00';
+  const safeTotalMatches = user.stats.totalMatches > 0 ? user.stats.totalMatches : 1;
   // const lossRate = ((user.stats.losses / user.stats.totalMatches) * 100).toFixed(1);
 
   const teamComparison = useMemo(() => {
@@ -316,7 +318,7 @@ const UserDashboard: React.FC = () => {
                           fill="none"
                           stroke="#ff0080"
                           strokeWidth="40"
-                          strokeDasharray={`${(user.stats.wins / user.stats.totalMatches) * 502.65} 502.65`}
+                          strokeDasharray={`${(user.stats.wins / safeTotalMatches) * 502.65} 502.65`}
                           transform="rotate(-90 100 100)"
                           className="pie-segment wins"
                         />
@@ -327,8 +329,8 @@ const UserDashboard: React.FC = () => {
                           fill="none"
                           stroke="#00ffff"
                           strokeWidth="40"
-                          strokeDasharray={`${(user.stats.losses / user.stats.totalMatches) * 502.65} 502.65`}
-                          strokeDashoffset={`-${(user.stats.wins / user.stats.totalMatches) * 502.65}`}
+                          strokeDasharray={`${(user.stats.losses / safeTotalMatches) * 502.65} 502.65`}
+                          strokeDashoffset={`-${(user.stats.wins / safeTotalMatches) * 502.65}`}
                           transform="rotate(-90 100 100)"
                           className="pie-segment losses"
                         />
@@ -427,24 +429,30 @@ const UserDashboard: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {teamComparison.map((team, index) => (
-                              <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
-                                <td className="rank-cell">
-                                  <span className="rank-badge" style={{backgroundColor: team.color}}>
-                                    #{index + 1}
-                                  </span>
-                                </td>
-                                <td className="team-cell">{team.team}</td>
-                                <td className="stat-cell">
-                                  <span className="stat-highlight" style={{color: team.color}}>
-                                    {team.winRate}%
-                                  </span>
-                                </td>
-                                <td className="matches-cell">
-                                  {Math.floor(team.kills / 8)}
-                                </td>
+                            {teamComparison.length > 0 ? (
+                              teamComparison.map((team, index) => (
+                                <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
+                                  <td className="rank-cell">
+                                    <span className="rank-badge" style={{backgroundColor: team.color}}>
+                                      #{index + 1}
+                                    </span>
+                                  </td>
+                                  <td className="team-cell">{team.team}</td>
+                                  <td className="stat-cell">
+                                    <span className="stat-highlight" style={{color: team.color}}>
+                                      {team.winRate}%
+                                    </span>
+                                  </td>
+                                  <td className="matches-cell">
+                                    {Math.floor(team.kills / 8)}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} style={{ textAlign: 'center' }}>No team comparison data available.</td>
                               </tr>
-                            ))}
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -464,24 +472,30 @@ const UserDashboard: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {teamComparison.map((team, index) => (
-                              <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
-                                <td className="rank-cell">
-                                  <span className="rank-badge" style={{backgroundColor: team.color}}>
-                                    #{index + 1}
-                                  </span>
-                                </td>
-                                <td className="team-cell">{team.team}</td>
-                                <td className="stat-cell">
-                                  <span className="stat-highlight" style={{color: team.color}}>
-                                    {team.kills}
-                                  </span>
-                                </td>
-                                <td className="matches-cell">
-                                  {(team.kills / Math.floor(team.kills / 8)).toFixed(1)}
-                                </td>
+                            {teamComparison.length > 0 ? (
+                              teamComparison.map((team, index) => (
+                                <tr key={index} className={index === 0 ? 'highlight-row' : ''}>
+                                  <td className="rank-cell">
+                                    <span className="rank-badge" style={{backgroundColor: team.color}}>
+                                      #{index + 1}
+                                    </span>
+                                  </td>
+                                  <td className="team-cell">{team.team}</td>
+                                  <td className="stat-cell">
+                                    <span className="stat-highlight" style={{color: team.color}}>
+                                      {team.kills}
+                                    </span>
+                                  </td>
+                                  <td className="matches-cell">
+                                    {(team.kills / Math.max(Math.floor(team.kills / 8), 1)).toFixed(1)}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={4} style={{ textAlign: 'center' }}>No team comparison data available.</td>
                               </tr>
-                            ))}
+                            )}
                           </tbody>
                         </table>
                       </div>
@@ -570,7 +584,7 @@ const UserDashboard: React.FC = () => {
                           <div className="players-list">
                             <div className="player-slot">
                               <span className="slot-number">1</span>
-                              <span className="player-name">{game.player1Name}</span>
+                              <span className="player-name">{game.gameId}</span>
                             </div>
                             <div className="player-slot">
                               <span className="slot-number">2</span>
