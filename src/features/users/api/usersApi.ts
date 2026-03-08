@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
-import { unwrapApiData } from "../../../shared/api/apiTypes";
+import { extractList, unwrapApiData } from "../../../shared/api/apiTypes";
 import type { PaginationParams } from "../../../shared/types";
 import type { ChangeUserRoleRequest, ChangeUserStatusRequest, UserEntity } from "../types/user.types";
 
@@ -18,28 +18,10 @@ const toQueryString = (params?: PaginationParams) => {
   return queryText ? `?${queryText}` : "";
 };
 
-const toUsers = (payload: unknown): UserEntity[] => {
-  if (Array.isArray(payload)) {
-    return payload as UserEntity[];
-  }
-
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.items)) {
-      return record.items as UserEntity[];
-    }
-    if (Array.isArray(record.users)) {
-      return record.users as UserEntity[];
-    }
-  }
-
-  return [];
-};
-
 export const usersApi = {
   async getUsers(params?: PaginationParams): Promise<UserEntity[]> {
     const response = await axiosInstance.get(`/users${toQueryString(params)}`);
-    return toUsers(unwrapApiData(response.data));
+    return extractList<UserEntity>(unwrapApiData(response.data), ["users"]);
   },
 
   async getUserById(id: string): Promise<UserEntity> {
@@ -57,4 +39,3 @@ export const usersApi = {
     return unwrapApiData(response.data) as UserEntity;
   },
 };
-

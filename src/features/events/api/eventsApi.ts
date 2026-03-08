@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
-import { unwrapApiData } from "../../../shared/api/apiTypes";
+import { extractList, unwrapApiData } from "../../../shared/api/apiTypes";
 import type { PaginationParams } from "../../../shared/types";
 import type { CreateEventRequest, EventEntity, UpdateEventRequest } from "../types/event.types";
 
@@ -19,28 +19,10 @@ const toQueryString = (params?: PaginationParams) => {
   return query ? `?${query}` : "";
 };
 
-const toArray = <T>(payload: unknown): T[] => {
-  if (Array.isArray(payload)) {
-    return payload as T[];
-  }
-
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.items)) {
-      return record.items as T[];
-    }
-    if (Array.isArray(record.events)) {
-      return record.events as T[];
-    }
-  }
-
-  return [];
-};
-
 export const eventsApi = {
   async getPublicEvents(params?: PaginationParams): Promise<EventEntity[]> {
     const response = await axiosInstance.get(`/events/public${toQueryString(params)}`);
-    return toArray<EventEntity>(unwrapApiData(response.data));
+    return extractList<EventEntity>(unwrapApiData(response.data), ["events"]);
   },
 
   async getPublicEventBySlug(slug: string): Promise<EventEntity> {
@@ -50,7 +32,7 @@ export const eventsApi = {
 
   async getEvents(params?: PaginationParams): Promise<EventEntity[]> {
     const response = await axiosInstance.get(`/events${toQueryString(params)}`);
-    return toArray<EventEntity>(unwrapApiData(response.data));
+    return extractList<EventEntity>(unwrapApiData(response.data), ["events"]);
   },
 
   async getEventById(id: string): Promise<EventEntity> {
@@ -72,4 +54,3 @@ export const eventsApi = {
     await axiosInstance.delete(`/events/${id}`);
   },
 };
-

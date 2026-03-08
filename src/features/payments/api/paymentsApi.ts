@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
-import { unwrapApiData } from "../../../shared/api/apiTypes";
+import { extractList, unwrapApiData } from "../../../shared/api/apiTypes";
 import type { PaginationParams } from "../../../shared/types";
 import type { PaymentEntity, ReviewPaymentRequest, SubmitPaymentRequest } from "../types/payment.types";
 
@@ -18,33 +18,19 @@ const toQueryString = (params?: PaginationParams) => {
   return queryText ? `?${queryText}` : "";
 };
 
-const toPayments = (payload: unknown): PaymentEntity[] => {
-  if (Array.isArray(payload)) {
-    return payload as PaymentEntity[];
-  }
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.items)) {
-      return record.items as PaymentEntity[];
-    }
-    if (Array.isArray(record.payments)) {
-      return record.payments as PaymentEntity[];
-    }
-  }
-  return [];
-};
-
 const toFormData = (payload: SubmitPaymentRequest): FormData => {
   const formData = new FormData();
-  formData.append("amount", payload.amount);
-  formData.append("method", payload.method);
+  const slip = payload.slip ?? payload.slipFile;
+  if (!slip) {
+    throw new Error("Payment slip file is required.");
+  }
 
+  formData.append("slip", slip);
+  const transactionReference = payload.transactionReference ?? payload.transactionId;
+  if (transactionReference) formData.append("transactionReference", transactionReference);
   if (payload.bankName) formData.append("bankName", payload.bankName);
   if (payload.accountHolder) formData.append("accountHolder", payload.accountHolder);
   if (payload.accountNumber) formData.append("accountNumber", payload.accountNumber);
-  if (payload.transactionId) formData.append("transactionId", payload.transactionId);
-  if (payload.slipFile) formData.append("slipFile", payload.slipFile);
-
   return formData;
 };
 
@@ -60,7 +46,7 @@ export const paymentsApi = {
 
   async getMyPayments(params?: PaginationParams): Promise<PaymentEntity[]> {
     const response = await axiosInstance.get(`/payments/my${toQueryString(params)}`);
-    return toPayments(unwrapApiData(response.data));
+    return extractList<PaymentEntity>(unwrapApiData(response.data), ["payments"]);
   },
 
   async getPaymentById(id: string): Promise<PaymentEntity> {
@@ -70,7 +56,7 @@ export const paymentsApi = {
 
   async getPayments(params?: PaginationParams): Promise<PaymentEntity[]> {
     const response = await axiosInstance.get(`/payments${toQueryString(params)}`);
-    return toPayments(unwrapApiData(response.data));
+    return extractList<PaymentEntity>(unwrapApiData(response.data), ["payments"]);
   },
 
   async reviewPayment(id: string, payload: ReviewPaymentRequest): Promise<PaymentEntity> {
@@ -82,4 +68,3 @@ export const paymentsApi = {
     await axiosInstance.delete(`/payments/${id}`);
   },
 };
-

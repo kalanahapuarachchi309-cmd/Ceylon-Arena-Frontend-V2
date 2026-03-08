@@ -1,77 +1,140 @@
-interface LiveEventsSectionProps {
-  onRegister: () => void;
-}
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const LiveEventsSection = ({ onRegister }: LiveEventsSectionProps) => (
-  <section className="section live-section" id="events">
-    <div className="container">
-      <div className="section-header">
-        <div className="live-badge">
-          <div className="live-dot"></div>
-          <span>LIVE ON</span>
+import { useAuth } from "../../auth/hooks/useAuth";
+import { usePublicEvents } from "../../events/hooks/useEvents";
+import { registrationsApi } from "../../registrations/api/registrationsApi";
+import { APP_ROUTES } from "../../../shared/constants/routes";
+import { formatDate } from "../../../shared/lib/date";
+import { resolveEntityId } from "../../../shared/api/apiTypes";
+import { getErrorMessage } from "../../../shared/utils/errorHandler";
+import { UserRole } from "../../../shared/types";
+
+const formatDateParts = (value?: string) => {
+  if (!value) {
+    return { day: "--", month: "---" };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { day: "--", month: "---" };
+  }
+
+  return {
+    day: String(date.getDate()).padStart(2, "0"),
+    month: date.toLocaleDateString(undefined, { month: "short" }).toUpperCase(),
+  };
+};
+
+const LiveEventsSection = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+  const { events, isLoading, error } = usePublicEvents({ page: 1, limit: 3 });
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+
+  const visibleEvents = useMemo(() => events.slice(0, 3), [events]);
+
+  const handleEventOpen = (slug?: string) => {
+    if (!slug) {
+      return;
+    }
+    navigate(`/events/${slug}`);
+  };
+
+  const handleRegister = async (eventId: string, slug?: string) => {
+    setActionError(null);
+    setActionSuccess(null);
+
+    if (!isAuthenticated || !user) {
+      navigate(APP_ROUTES.LOGIN, { state: { redirectTo: slug ? `/events/${slug}` : APP_ROUTES.EVENTS } });
+      return;
+    }
+
+    if (user.role !== UserRole.PLAYER) {
+      setActionError("Only players can register for events.");
+      return;
+    }
+
+    setPendingEventId(eventId);
+    try {
+      await registrationsApi.createRegistration({ eventId });
+      setActionSuccess("Registration created. You can manage it from My Registrations.");
+    } catch (registerError) {
+      setActionError(getErrorMessage(registerError));
+    } finally {
+      setPendingEventId(null);
+    }
+  };
+
+  return (
+    <section className="section live-section" id="events">
+      <div className="container">
+        <div className="section-header">
+          <div className="live-badge">
+            <div className="live-dot"></div>
+            <span>LIVE ON</span>
+          </div>
+          <h2 className="section-title">Upcoming Events</h2>
+          <p className="section-subtitle">Hurry up! For the Enrollments - Be there! To win.</p>
         </div>
-        <h2 className="section-title">Upcoming Events</h2>
-        <p className="section-subtitle">Hurry up! For the Enrollments - Be there! To win.</p>
+
+        {actionError ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{actionError}</p> : null}
+        {actionSuccess ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{actionSuccess}</p> : null}
+        {error ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{error}</p> : null}
+
+        <div className="events-container">
+          {isLoading ? (
+            <div className="event-card">
+              <div className="event-info">
+                <h3>Loading events...</h3>
+              </div>
+            </div>
+          ) : visibleEvents.length === 0 ? (
+            <div className="event-card">
+              <div className="event-info">
+                <h3>No public events available right now</h3>
+                <p>Please check back later.</p>
+              </div>
+            </div>
+          ) : (
+            visibleEvents.map((event) => {
+              const eventId = resolveEntityId(event);
+              const eventDate = formatDateParts(event.eventStartAt || event.registrationOpenAt);
+              return (
+                <div className="event-card" key={eventId || event.slug}>
+                  <div className="event-date">
+                    <span className="date-day">{eventDate.day}</span>
+                    <span className="date-month">{eventDate.month}</span>
+                  </div>
+                  <div className="event-info">
+                    <h3 style={{ cursor: "pointer" }} onClick={() => handleEventOpen(event.slug)}>
+                      {event.title}
+                    </h3>
+                    <p>
+                      {event.gameName} | {event.currency} {event.entryFee} | {event.maxTeams} Teams
+                    </p>
+                    <div className="event-tags">
+                      <span className="tag">{event.status}</span>
+                      <span className="tag">{formatDate(event.registrationCloseAt)}</span>
+                    </div>
+                  </div>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => eventId && handleRegister(eventId, event.slug)}
+                    disabled={!eventId || pendingEventId === eventId}
+                  >
+                    {pendingEventId === eventId ? "Registering..." : "Register"}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
-
-      <div className="events-container">
-        <div className="event-card">
-          <div className="event-date">
-            <span className="date-day">25</span>
-            <span className="date-month">JAN</span>
-          </div>
-          <div className="event-info">
-            <h3>Free Fire Championship 2026</h3>
-            <p>Biggest Prize Pool in Sri Lankan History! | 128 Teams</p>
-            <div className="event-tags">
-              <span className="tag">Battle Royale</span>
-              <span className="tag">Squad</span>
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={onRegister}>
-            Register
-          </button>
-        </div>
-
-        <div className="event-card">
-          <div className="event-date">
-            <span className="date-day">02</span>
-            <span className="date-month">FEB</span>
-          </div>
-          <div className="event-info">
-            <h3>PUBG Pro League Season 3</h3>
-            <p>Prize Pool: LKR 75,000 | 64 Teams</p>
-            <div className="event-tags">
-              <span className="tag">Professional</span>
-              <span className="tag">Squad</span>
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={onRegister}>
-            Register
-          </button>
-        </div>
-
-        <div className="event-card">
-          <div className="event-date">
-            <span className="date-day">10</span>
-            <span className="date-month">FEB</span>
-          </div>
-          <div className="event-info">
-            <h3>Valorant Masters Cup</h3>
-            <p>Prize Pool: LKR 100,000 | 32 Teams</p>
-            <div className="event-tags">
-              <span className="tag">Tactical</span>
-              <span className="tag">Team</span>
-            </div>
-          </div>
-          <button className="btn btn-primary" onClick={onRegister}>
-            Register
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export default LiveEventsSection;
-

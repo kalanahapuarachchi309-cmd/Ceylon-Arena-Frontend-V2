@@ -13,6 +13,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import UnauthorizedPage from "../features/auth/pages/UnauthorizedPage";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import UserDashboardPage from "../features/dashboard/pages/UserDashboardPage";
+import PublicEventDetailPage from "../features/events/pages/PublicEventDetailPage";
 import HomePage from "../features/home/pages/HomePage";
 import NotFoundPage from "../features/home/pages/NotFoundPage";
 import PaymentPage from "../features/payment-flow/pages/PaymentPage";
@@ -24,7 +25,7 @@ const AppRoutes = () => (
     <Route element={<PublicLayout />}>
       <Route path={APP_ROUTES.HOME} element={<HomePage />} />
       <Route path={APP_ROUTES.EVENTS} element={<HomePage />} />
-      <Route path={APP_ROUTES.EVENT_DETAILS} element={<HomePage />} />
+      <Route path={APP_ROUTES.EVENT_DETAILS} element={<PublicEventDetailPage />} />
       <Route path={APP_ROUTES.COSPLAY} element={<CosplayRegistrationPage />} />
       <Route path={APP_ROUTES.PAYMENT} element={<PaymentPage />} />
     </Route>
@@ -42,7 +43,10 @@ const AppRoutes = () => (
         <Route path={APP_ROUTES.DASHBOARD} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_TEAM} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_REGISTRATIONS} element={<UserDashboardPage />} />
+        <Route path={APP_ROUTES.MY_REGISTRATION_DETAILS} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_PAYMENTS} element={<UserDashboardPage />} />
+        <Route path={APP_ROUTES.MY_PAYMENT_DETAILS} element={<UserDashboardPage />} />
+        <Route path={APP_ROUTES.CHANGE_PASSWORD} element={<UserDashboardPage />} />
       </Route>
     </Route>
 
@@ -50,8 +54,12 @@ const AppRoutes = () => (
       <Route element={<AdminLayout />}>
         <Route path={APP_ROUTES.ADMIN_HOME} element={<AdminDashboardPage />} />
         <Route path={APP_ROUTES.ADMIN_EVENTS} element={<AdminDashboardPage />} />
+        <Route path={APP_ROUTES.ADMIN_REGISTRATIONS} element={<AdminDashboardPage />} />
         <Route path={APP_ROUTES.ADMIN_PAYMENTS} element={<AdminDashboardPage />} />
         <Route path={APP_ROUTES.ADMIN_USERS} element={<AdminDashboardPage />} />
+        <Route path={APP_ROUTES.ADMIN_USER_DETAILS} element={<AdminDashboardPage />} />
+        <Route path={APP_ROUTES.ADMIN_TEAMS} element={<AdminDashboardPage />} />
+        <Route path={APP_ROUTES.ADMIN_TEAM_DETAILS} element={<AdminDashboardPage />} />
       </Route>
     </Route>
 
@@ -61,4 +69,3 @@ const AppRoutes = () => (
 );
 
 export default AppRoutes;
-

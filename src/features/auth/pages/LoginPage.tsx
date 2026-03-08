@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import LoginForm from "../components/LoginForm";
 import AuthErrorMessage from "../components/AuthErrorMessage";
@@ -16,6 +16,7 @@ interface LoginValues {
 }
 
 const LoginPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState<LoginValues>({
@@ -24,6 +25,14 @@ const LoginPage = () => {
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const redirectTo =
+    typeof location.state === "object" &&
+    location.state &&
+    "redirectTo" in location.state &&
+    typeof (location.state as { redirectTo?: string }).redirectTo === "string"
+      ? (location.state as { redirectTo: string }).redirectTo
+      : "";
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
@@ -44,17 +53,15 @@ const LoginPage = () => {
         password: formData.password,
       });
 
-      alert(`Welcome back, ${session.user.playerName}!`);
-
-      if (session.user.role === UserRole.ADMIN) {
+      if (redirectTo) {
+        navigate(redirectTo);
+      } else if (session.user.role === UserRole.ADMIN) {
         navigate(APP_ROUTES.ADMIN_HOME);
       } else {
         navigate(APP_ROUTES.DASHBOARD);
       }
     } catch (error) {
-      const message = getErrorMessage(error);
-      setErrorMessage(message);
-      alert(message);
+      setErrorMessage(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -64,7 +71,7 @@ const LoginPage = () => {
     <div className="register-page">
       <div className="register-container">
         <button className="btn-home-nav" onClick={() => navigate(APP_ROUTES.HOME)}>
-          ← Back to Home
+          Back to Home
         </button>
 
         <h1 className="register-title">

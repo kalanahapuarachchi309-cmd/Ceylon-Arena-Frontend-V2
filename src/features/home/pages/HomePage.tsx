@@ -105,7 +105,7 @@ const HomePage = () => {
         onRegister={() => navigate("/register")}
       />
 
-      <LiveEventsSection onRegister={() => navigate("/register")} />
+      <LiveEventsSection />
       <StatsBarSection onRegister={() => navigate("/register")} />
       <AboutSection />
       <CtaSection onRegister={() => navigate("/register")} />

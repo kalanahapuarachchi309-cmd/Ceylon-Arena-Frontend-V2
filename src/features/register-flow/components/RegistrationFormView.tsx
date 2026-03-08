@@ -5,6 +5,7 @@ import type { GameData, RegistrationFormValues } from "./register.types";
 interface RegistrationFormViewProps {
   formData: RegistrationFormValues;
   selectedGameData?: GameData;
+  loading: boolean;
   onBack: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onInputChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
@@ -13,6 +14,7 @@ interface RegistrationFormViewProps {
 const RegistrationFormView = ({
   formData,
   selectedGameData,
+  loading,
   onBack,
   onSubmit,
   onInputChange,
@@ -20,7 +22,7 @@ const RegistrationFormView = ({
   <div className="registration-form-container">
     <div className="selected-game-header">
       <button className="btn-back" onClick={onBack}>
-        ← Back to Games
+        Back to Games
       </button>
     </div>
 
@@ -29,14 +31,14 @@ const RegistrationFormView = ({
         <h3 className="form-section-title">Personal Information</h3>
 
         <div className="form-group">
-          <label htmlFor="playerName">Team Leader Name *</label>
+          <label htmlFor="fullName">Team Leader Name *</label>
           <input
             type="text"
-            id="playerName"
-            name="playerName"
-            value={formData.playerName}
+            id="fullName"
+            name="fullName"
+            value={formData.fullName}
             onChange={onInputChange}
-            placeholder="Enter your Real name"
+            placeholder="Enter your full name"
             required
           />
         </div>
@@ -75,30 +77,18 @@ const RegistrationFormView = ({
             name="phone"
             value={formData.phone}
             onChange={onInputChange}
-            placeholder="+1 (555) 000-0000"
+            placeholder="+94771234567"
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="promocode">Promo Code (Optional)</label>
+          <label htmlFor="address">Address *</label>
           <input
             type="text"
-            id="promocode"
-            name="promocode"
-            value={formData.promocode}
-            onChange={onInputChange}
-            placeholder="Enter promo code"
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="leaderAddress">Leader Address *</label>
-          <input
-            type="text"
-            id="leaderAddress"
-            name="leaderAddress"
-            value={formData.leaderAddress}
+            id="address"
+            name="address"
+            value={formData.address}
             onChange={onInputChange}
             placeholder="Enter your address"
             required
@@ -106,14 +96,26 @@ const RegistrationFormView = ({
         </div>
 
         <div className="form-group">
-          <label htmlFor="gameId">Leader Free Fire Game ID *</label>
+          <label htmlFor="promoCode">Promo Code (Optional)</label>
           <input
             type="text"
-            id="gameId"
-            name="gameId"
-            value={formData.gameId}
+            id="promoCode"
+            name="promoCode"
+            value={formData.promoCode}
             onChange={onInputChange}
-            placeholder="Enter Free Fire game ID"
+            placeholder="Enter promo code"
+          />
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="leaderInGameId">Leader In-Game ID *</label>
+          <input
+            type="text"
+            id="leaderInGameId"
+            name="leaderInGameId"
+            value={formData.leaderInGameId}
+            onChange={onInputChange}
+            placeholder="Enter leader in-game id"
             required
           />
         </div>
@@ -137,31 +139,31 @@ const RegistrationFormView = ({
       </div>
 
       <div className="form-section">
-        <h3 className="form-section-title">Other 4 Players Information</h3>
+        <h3 className="form-section-title">Other 3 Players Information</h3>
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="player2Name">Player 2 Name *</label>
+            <label htmlFor="member1Name">Player 2 Name *</label>
             <input
               type="text"
-              id="player2Name"
-              name="player2Name"
-              value={formData.player2Name}
+              id="member1Name"
+              name="member1Name"
+              value={formData.member1Name}
               onChange={onInputChange}
-              placeholder="Enter player 2 Real name"
+              placeholder="Enter player 2 name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="player2GameId">Player 2 Free Fire Game ID *</label>
+            <label htmlFor="member1InGameId">Player 2 In-Game ID *</label>
             <input
               type="text"
-              id="player2GameId"
-              name="player2GameId"
-              value={formData.player2GameId}
+              id="member1InGameId"
+              name="member1InGameId"
+              value={formData.member1InGameId}
               onChange={onInputChange}
-              placeholder="Enter Free Fire game ID"
+              placeholder="Enter player 2 in-game id"
               required
             />
           </div>
@@ -169,27 +171,27 @@ const RegistrationFormView = ({
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="player3Name">Player 3 Name *</label>
+            <label htmlFor="member2Name">Player 3 Name *</label>
             <input
               type="text"
-              id="player3Name"
-              name="player3Name"
-              value={formData.player3Name}
+              id="member2Name"
+              name="member2Name"
+              value={formData.member2Name}
               onChange={onInputChange}
-              placeholder="Enter player 3 Real name"
+              placeholder="Enter player 3 name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="player3GameId">Player 3 Free Fire Game ID *</label>
+            <label htmlFor="member2InGameId">Player 3 In-Game ID *</label>
             <input
               type="text"
-              id="player3GameId"
-              name="player3GameId"
-              value={formData.player3GameId}
+              id="member2InGameId"
+              name="member2InGameId"
+              value={formData.member2InGameId}
               onChange={onInputChange}
-              placeholder="Enter Free Fire game ID"
+              placeholder="Enter player 3 in-game id"
               required
             />
           </div>
@@ -197,27 +199,27 @@ const RegistrationFormView = ({
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="player4Name">Player 4 Name *</label>
+            <label htmlFor="member3Name">Player 4 Name *</label>
             <input
               type="text"
-              id="player4Name"
-              name="player4Name"
-              value={formData.player4Name}
+              id="member3Name"
+              name="member3Name"
+              value={formData.member3Name}
               onChange={onInputChange}
-              placeholder="Enter player 4 Real name"
+              placeholder="Enter player 4 name"
               required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="player4GameId">Player 4 Free Fire Game ID *</label>
+            <label htmlFor="member3InGameId">Player 4 In-Game ID *</label>
             <input
               type="text"
-              id="player4GameId"
-              name="player4GameId"
-              value={formData.player4GameId}
+              id="member3InGameId"
+              name="member3InGameId"
+              value={formData.member3InGameId}
               onChange={onInputChange}
-              placeholder="Enter Free Fire game ID"
+              placeholder="Enter player 4 in-game id"
               required
             />
           </div>
@@ -225,10 +227,10 @@ const RegistrationFormView = ({
       </div>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn-submit">
-          Complete Registration
+        <button type="submit" className="btn btn-submit" disabled={loading}>
+          {loading ? "Creating Account..." : "Complete Registration"}
         </button>
-        <button type="button" className="btn btn-cancel" onClick={onBack}>
+        <button type="button" className="btn btn-cancel" onClick={onBack} disabled={loading}>
           Cancel
         </button>
       </div>
@@ -243,16 +245,10 @@ const RegistrationFormView = ({
               d="M 140, 140 m -110, 0 a 110,110 0 1,1 220,0 a 110,110 0 1,1 -220,0"
             />
           </defs>
-          <text
-            fontSize="20"
-            fontWeight="bold"
-            fill="#ffffff"
-            letterSpacing="3"
-            className="animated-text"
-          >
+          <text fontSize="20" fontWeight="bold" fill="#ffffff" letterSpacing="3" className="animated-text">
             <textPath href="#circlePath" startOffset="0%" textAnchor="start">
-              {selectedGameData?.name.toUpperCase()} • {selectedGameData?.description} •{" "}
-              {selectedGameData?.name.toUpperCase()} •
+              {selectedGameData?.name.toUpperCase()} | {selectedGameData?.description} |{" "}
+              {selectedGameData?.name.toUpperCase()} |
             </textPath>
           </text>
         </svg>
@@ -262,4 +258,3 @@ const RegistrationFormView = ({
 );
 
 export default RegistrationFormView;
-

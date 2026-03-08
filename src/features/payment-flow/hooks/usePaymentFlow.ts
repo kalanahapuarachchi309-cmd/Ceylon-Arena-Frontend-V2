@@ -73,10 +73,28 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
 
     if (!isAuthenticated) {
       await register({
-        playerName: safeRegistrationData.playerName,
+        fullName: safeRegistrationData.playerName,
         email: safeRegistrationData.email,
         password: safeRegistrationData.password,
         phone: safeRegistrationData.phone,
+        address: safeRegistrationData.leaderAddress || "N/A",
+        teamName: safeRegistrationData.teamName || "Team",
+        primaryGame: safeRegistrationData.game || "Unknown",
+        leaderInGameId: safeRegistrationData.gameId || "N/A",
+        members: [
+          {
+            name: safeRegistrationData.player2Name || "Member 1",
+            inGameId: safeRegistrationData.player2GameId || "member1",
+          },
+          {
+            name: safeRegistrationData.player3Name || "Member 2",
+            inGameId: safeRegistrationData.player3GameId || "member2",
+          },
+          {
+            name: safeRegistrationData.player4Name || "Member 3",
+            inGameId: safeRegistrationData.player4GameId || "member3",
+          },
+        ],
       });
     }
 
@@ -108,23 +126,10 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
         return;
       }
 
-      setPaymentStatus("processing");
-      setErrorMessage("");
-
-      try {
-        const registrationId = await ensureRegistrationId();
-        await paymentsApi.submitPayment(registrationId, {
-          amount: formData.amount,
-          method: "CARD",
-          transactionId: formData.cardNumber.slice(-6),
-        });
-        completeSuccess();
-      } catch (error) {
-        setPaymentStatus("error");
-        setErrorMessage(getErrorMessage(error));
-      }
+      setPaymentStatus("error");
+      setErrorMessage("Card payment is unavailable for this backend. Please use bank transfer.");
     },
-    [completeSuccess, ensureRegistrationId, formData]
+    [formData]
   );
 
   const handleBankPayment = useCallback(
@@ -142,13 +147,10 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
       try {
         const registrationId = await ensureRegistrationId();
         await paymentsApi.submitPayment(registrationId, {
-          amount: formData.amount,
-          method: "BANK",
+          slip: formData.slipFile,
           bankName: formData.bankName,
           accountHolder: formData.accountHolder,
-          accountNumber: formData.accountNumber,
-          transactionId: formData.transactionId,
-          slipFile: formData.slipFile,
+          transactionReference: formData.transactionId,
         });
         completeSuccess();
       } catch (error) {

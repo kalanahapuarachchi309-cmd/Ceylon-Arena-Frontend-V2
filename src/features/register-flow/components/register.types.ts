@@ -3,22 +3,20 @@ import type { CSSProperties } from "react";
 export type GameType = "freefire" | "pubg" | "cod" | "valorant" | null;
 
 export interface RegistrationFormValues {
-  playerName: string;
+  fullName: string;
   email: string;
   password: string;
   phone: string;
-  promocode: string;
-  leaderAddress: string;
+  address: string;
+  promoCode: string;
   teamName: string;
-  gameId: string;
-  player2Name: string;
-  player2GameId: string;
-  player3Name: string;
-  player3GameId: string;
-  player4Name: string;
-  player4GameId: string;
-  player5Name: string;
-  player5GameId: string;
+  leaderInGameId: string;
+  member1Name: string;
+  member1InGameId: string;
+  member2Name: string;
+  member2InGameId: string;
+  member3Name: string;
+  member3InGameId: string;
 }
 
 export interface GameData {
@@ -41,21 +39,18 @@ export type GameCardStyle = CSSProperties & {
 };
 
 export const defaultRegistrationFormValues: RegistrationFormValues = {
-  playerName: "",
+  fullName: "",
   email: "",
   password: "",
   phone: "",
-  promocode: "",
-  leaderAddress: "",
+  address: "",
+  promoCode: "",
   teamName: "",
-  gameId: "",
-  player2Name: "",
-  player2GameId: "",
-  player3Name: "",
-  player3GameId: "",
-  player4Name: "",
-  player4GameId: "",
-  player5Name: "",
-  player5GameId: "",
+  leaderInGameId: "",
+  member1Name: "",
+  member1InGameId: "",
+  member2Name: "",
+  member2InGameId: "",
+  member3Name: "",
+  member3InGameId: "",
 };
-

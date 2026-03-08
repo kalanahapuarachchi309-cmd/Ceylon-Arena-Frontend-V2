@@ -7,17 +7,22 @@ export interface LoginRequest {
 
 export interface RegisterRequest {
   fullName: string;
+  playerName?: string;
   email: string;
   password: string;
   phone: string;
   address: string;
   promoCode?: string;
+  promocode?: string;
   teamName: string;
   primaryGame: string;
+  game?: string;
   leaderInGameId: string;
+  gameId?: string;
   members: Array<{
     name: string;
     inGameId: string;
+    gameId?: string;
   }>;
 }
 

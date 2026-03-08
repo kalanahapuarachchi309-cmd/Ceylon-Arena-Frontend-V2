@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
-import { unwrapApiData } from "../../../shared/api/apiTypes";
+import { extractList, unwrapApiData } from "../../../shared/api/apiTypes";
 import type { PaginationParams } from "../../../shared/types";
 import type {
   CreateRegistrationRequest,
@@ -22,22 +22,6 @@ const toQueryString = (params?: PaginationParams) => {
   return queryText ? `?${queryText}` : "";
 };
 
-const toRegistrations = (payload: unknown): RegistrationEntity[] => {
-  if (Array.isArray(payload)) {
-    return payload as RegistrationEntity[];
-  }
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.items)) {
-      return record.items as RegistrationEntity[];
-    }
-    if (Array.isArray(record.registrations)) {
-      return record.registrations as RegistrationEntity[];
-    }
-  }
-  return [];
-};
-
 export const registrationsApi = {
   async createRegistration(payload: CreateRegistrationRequest): Promise<RegistrationEntity> {
     const response = await axiosInstance.post("/registrations", payload);
@@ -46,7 +30,7 @@ export const registrationsApi = {
 
   async getMyRegistrations(params?: PaginationParams): Promise<RegistrationEntity[]> {
     const response = await axiosInstance.get(`/registrations/my${toQueryString(params)}`);
-    return toRegistrations(unwrapApiData(response.data));
+    return extractList<RegistrationEntity>(unwrapApiData(response.data), ["registrations"]);
   },
 
   async getRegistrationById(id: string): Promise<RegistrationEntity> {
@@ -56,7 +40,7 @@ export const registrationsApi = {
 
   async getRegistrations(params?: PaginationParams): Promise<RegistrationEntity[]> {
     const response = await axiosInstance.get(`/registrations${toQueryString(params)}`);
-    return toRegistrations(unwrapApiData(response.data));
+    return extractList<RegistrationEntity>(unwrapApiData(response.data), ["registrations"]);
   },
 
   async updateRegistrationStatus(
@@ -67,4 +51,3 @@ export const registrationsApi = {
     return unwrapApiData(response.data) as RegistrationEntity;
   },
 };
-

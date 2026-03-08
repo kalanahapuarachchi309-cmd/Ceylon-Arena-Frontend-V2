@@ -1,5 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
-import { unwrapApiData } from "../../../shared/api/apiTypes";
+import { extractList, unwrapApiData } from "../../../shared/api/apiTypes";
 import type { PaginationParams } from "../../../shared/types";
 import type { TeamEntity, UpdateTeamRequest } from "../types/team.types";
 
@@ -16,22 +16,6 @@ const toQueryString = (params?: PaginationParams) => {
   });
   const queryText = query.toString();
   return queryText ? `?${queryText}` : "";
-};
-
-const toTeams = (payload: unknown): TeamEntity[] => {
-  if (Array.isArray(payload)) {
-    return payload as TeamEntity[];
-  }
-  if (payload && typeof payload === "object") {
-    const record = payload as Record<string, unknown>;
-    if (Array.isArray(record.items)) {
-      return record.items as TeamEntity[];
-    }
-    if (Array.isArray(record.teams)) {
-      return record.teams as TeamEntity[];
-    }
-  }
-  return [];
 };
 
 export const teamsApi = {
@@ -51,7 +35,7 @@ export const teamsApi = {
 
   async getTeams(params?: PaginationParams): Promise<TeamEntity[]> {
     const response = await axiosInstance.get(`/teams${toQueryString(params)}`);
-    return toTeams(unwrapApiData(response.data));
+    return extractList<TeamEntity>(unwrapApiData(response.data), ["teams"]);
   },
 
   async getTeamById(id: string): Promise<TeamEntity> {
@@ -59,4 +43,3 @@ export const teamsApi = {
     return unwrapApiData(response.data) as TeamEntity;
   },
 };
-

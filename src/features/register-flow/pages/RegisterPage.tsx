@@ -1,6 +1,8 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 
+import AuthErrorMessage from "../../auth/components/AuthErrorMessage";
+import { useAuth } from "../../auth/hooks/useAuth";
 import GameSelectionView from "../components/GameSelectionView";
 import RegistrationFormView from "../components/RegistrationFormView";
 import { gameOptions } from "../components/gameOptions";
@@ -9,17 +11,24 @@ import {
   type GameType,
   type RegistrationFormValues,
 } from "../components/register.types";
+import { APP_ROUTES } from "../../../shared/constants/routes";
+import { UserRole } from "../../../shared/types";
+import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/Register.css";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { register } = useAuth();
   const [selectedGame, setSelectedGame] = useState<GameType>(null);
   const [formData, setFormData] = useState<RegistrationFormValues>(defaultRegistrationFormValues);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleGameSelect = (gameId: GameType) => {
     setSelectedGame(gameId);
     setFormData(defaultRegistrationFormValues);
+    setErrorMessage(null);
   };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -30,34 +39,64 @@ const RegisterPage = () => {
     }));
   };
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!selectedGame) {
+      setErrorMessage("Please select a game first.");
+      return;
+    }
 
-    navigate("/payment", {
-      state: {
-        playerName: formData.playerName,
+    const selectedGameData = gameOptions.find((game) => game.id === selectedGame);
+    if (!selectedGameData) {
+      setErrorMessage("Selected game is invalid.");
+      return;
+    }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    try {
+      const session = await register({
+        fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
         phone: formData.phone,
-        promocode: formData.promocode,
-        leaderAddress: formData.leaderAddress,
-        game: selectedGame,
-        gameId: formData.gameId,
+        address: formData.address,
+        promoCode: formData.promoCode || undefined,
         teamName: formData.teamName,
-        player2Name: formData.player2Name,
-        player2GameId: formData.player2GameId,
-        player3Name: formData.player3Name,
-        player3GameId: formData.player3GameId,
-        player4Name: formData.player4Name,
-        player4GameId: formData.player4GameId,
-        player5Name: formData.player5Name,
-        player5GameId: formData.player5GameId,
-      },
-    });
+        primaryGame: selectedGameData.name,
+        leaderInGameId: formData.leaderInGameId,
+        members: [
+          {
+            name: formData.member1Name,
+            inGameId: formData.member1InGameId,
+          },
+          {
+            name: formData.member2Name,
+            inGameId: formData.member2InGameId,
+          },
+          {
+            name: formData.member3Name,
+            inGameId: formData.member3InGameId,
+          },
+        ],
+      });
+
+      if (session.user.role === UserRole.ADMIN) {
+        navigate(APP_ROUTES.ADMIN_HOME);
+      } else {
+        navigate(APP_ROUTES.DASHBOARD);
+      }
+    } catch (submitError) {
+      setErrorMessage(getErrorMessage(submitError));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBack = () => {
     setSelectedGame(null);
+    setErrorMessage(null);
   };
 
   const selectedGameData = gameOptions.find((game) => game.id === selectedGame);
@@ -65,8 +104,8 @@ const RegisterPage = () => {
   return (
     <div className="register-page">
       <div className="register-container">
-        <button className="btn-home-nav" onClick={() => navigate("/")}>
-          ← Back to Home
+        <button className="btn-home-nav" onClick={() => navigate(APP_ROUTES.HOME)}>
+          Back to Home
         </button>
 
         <h1 className="register-title">
@@ -74,12 +113,15 @@ const RegisterPage = () => {
         </h1>
         <p className="register-subtitle">Choose your game and join the competition</p>
 
+        <AuthErrorMessage message={errorMessage} />
+
         {!selectedGame ? (
           <GameSelectionView games={gameOptions} onSelect={handleGameSelect} />
         ) : (
           <RegistrationFormView
             formData={formData}
             selectedGameData={selectedGameData}
+            loading={loading}
             onBack={handleBack}
             onSubmit={handleSubmit}
             onInputChange={handleInputChange}

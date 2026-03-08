@@ -6,6 +6,11 @@ export interface SubmitPaymentRequest {
   transactionReference?: string;
   bankName?: string;
   accountHolder?: string;
+  amount?: string;
+  method?: "BANK" | "CARD";
+  accountNumber?: string;
+  transactionId?: string;
+  slipFile?: File;
 }
 
 export interface ReviewPaymentRequest {

@@ -24,6 +24,7 @@ export interface AuthContextValue {
   login: (payload: LoginRequest) => Promise<AuthSession>;
   register: (payload: RegisterRequest) => Promise<AuthSession>;
   logout: () => Promise<void>;
+  logoutAll: () => Promise<void>;
   refreshSession: () => Promise<void>;
   changePassword: (payload: ChangePasswordRequest) => Promise<void>;
 }
@@ -58,19 +59,19 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   const bootstrapAuth = useCallback(async () => {
     setIsLoading(true);
-    const token = getAccessToken();
-
-    if (!token) {
-      clearSession();
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     try {
       const profile = await authApi.me();
       setStoredUser(profile);
       setUser(profile);
+
+      if (!getAccessToken()) {
+        try {
+          const refreshedToken = await authApi.refresh();
+          setAccessToken(refreshedToken);
+        } catch {
+          // Session is still valid via cookies, token refresh can be deferred.
+        }
+      }
     } catch {
       try {
         await refreshSession();
@@ -124,6 +125,15 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     }
   }, []);
 
+  const logoutAll = useCallback(async () => {
+    try {
+      await authApi.logoutAll();
+    } finally {
+      clearSession();
+      setUser(null);
+    }
+  }, []);
+
   const changePassword = useCallback(async (payload: ChangePasswordRequest) => {
     await authApi.changePassword(payload);
   }, []);
@@ -136,12 +146,12 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
       login,
       register,
       logout,
+      logoutAll,
       refreshSession,
       changePassword,
     }),
-    [user, isLoading, login, register, logout, refreshSession, changePassword]
+    [user, isLoading, login, register, logout, logoutAll, refreshSession, changePassword]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
