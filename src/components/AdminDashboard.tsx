@@ -139,7 +139,7 @@ export default function AdminDashboard() {
   // Fetch payments from backend and map to frontend Payment shape
   const fetchPayments = async (page = 1, limit = 10) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/payments?page=${page}&limit=${limit}`);
+      const res = await fetch(`${API_BASE_URL}/payments?page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const mapped: Payment[] = (data.payments || []).map((p: any) => ({

@@ -1,0 +1,20 @@
+export const APP_ROUTES = {
+  HOME: "/",
+  LOGIN: "/login",
+  LOGIN_LEGACY: "/sign",
+  REGISTER: "/register",
+  EVENTS: "/events",
+  EVENT_DETAILS: "/events/:slug",
+  DASHBOARD: "/dashboard",
+  MY_TEAM: "/my-team",
+  MY_REGISTRATIONS: "/my-registrations",
+  MY_PAYMENTS: "/my-payments",
+  ADMIN_EVENTS: "/admin/events",
+  ADMIN_PAYMENTS: "/admin/payments",
+  ADMIN_USERS: "/admin/users",
+  ADMIN_HOME: "/admin",
+  COSPLAY: "/cosplay",
+  PAYMENT: "/payment",
+  UNAUTHORIZED: "/unauthorized",
+} as const;
+
