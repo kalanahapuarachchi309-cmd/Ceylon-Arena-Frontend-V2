@@ -71,6 +71,14 @@ export default function AdminDashboard() {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [paymentFilter, setPaymentFilter] = useState<'all' | 'verified' | 'pending' | 'rejected'>('all');
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    name: '',
+    date: '',
+    status: 'upcoming' as 'upcoming' | 'ongoing' | 'completed',
+    participants: '',
+    prizePool: '',
+  });
 
   useEffect(() => {
     // Load admin data from localStorage
@@ -134,12 +142,38 @@ export default function AdminDashboard() {
 
   const teammates: Teammate[] = [];
 
-  const events: Event[] = [];
+  const [events, setEvents] = useState<Event[]>([]);
+
+  const handleAddEvent = () => {
+    if (!newEvent.name || !newEvent.date || !newEvent.participants || !newEvent.prizePool) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const event: Event = {
+      id: String(Date.now()),
+      name: newEvent.name,
+      date: newEvent.date,
+      status: newEvent.status,
+      participants: parseInt(newEvent.participants),
+      prizePool: newEvent.prizePool,
+    };
+
+    setEvents([...events, event]);
+    setShowAddEventModal(false);
+    setNewEvent({
+      name: '',
+      date: '',
+      status: 'upcoming',
+      participants: '',
+      prizePool: '',
+    });
+  };
 
   // Fetch payments from backend and map to frontend Payment shape
   const fetchPayments = async (page = 1, limit = 10) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/payments?page=${page}&limit=${limit}`);
+      const res = await fetch(`${API_BASE_URL}/payments?page=${page}&limit=${limit}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       const mapped: Payment[] = (data.payments || []).map((p: any) => ({
@@ -668,7 +702,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="add-event-section">
-                  <button className="btn-add-event">+ Add New Event</button>
+                  <button className="btn-add-event" onClick={() => setShowAddEventModal(true)}>+ Add New Event</button>
                 </div>
               </div>
             </div>
@@ -995,6 +1029,137 @@ export default function AdminDashboard() {
         })()}
 
       </div>
+
+      {/* Add Event Modal */}
+      {showAddEventModal && (
+        <div className="payment-modal-overlay" onClick={() => setShowAddEventModal(false)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <button className="modal-close-btn" onClick={() => setShowAddEventModal(false)}>✕</button>
+
+            <div className="modal-header">
+              <div className="modal-avatar">🎯</div>
+              <div className="modal-title-info">
+                <h2 className="modal-player-name">Add New Event</h2>
+                <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>Create a new gaming event</p>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-details-section">
+                <div className="modal-details-grid" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  <div className="modal-detail-item" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label className="modal-detail-label" style={{ fontWeight: 'bold' }}>Event Name *</label>
+                    <input
+                      type="text"
+                      placeholder="Enter event name"
+                      value={newEvent.name}
+                      onChange={(e) => setNewEvent({ ...newEvent, name: e.target.value })}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                      }}
+                    />
+                  </div>
+
+                  <div className="modal-detail-item" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label className="modal-detail-label" style={{ fontWeight: 'bold' }}>Event Date *</label>
+                    <input
+                      type="date"
+                      value={newEvent.date}
+                      onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                      }}
+                    />
+                  </div>
+
+                  <div className="modal-detail-item" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label className="modal-detail-label" style={{ fontWeight: 'bold' }}>Status *</label>
+                    <select
+                      value={newEvent.status}
+                      onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value as 'upcoming' | 'ongoing' | 'completed' })}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                      }}
+                    >
+                      <option value="upcoming">📅 Upcoming</option>
+                      <option value="ongoing">🔴 Ongoing</option>
+                      <option value="completed">✅ Completed</option>
+                    </select>
+                  </div>
+
+                  <div className="modal-detail-item" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label className="modal-detail-label" style={{ fontWeight: 'bold' }}>Number of Participants *</label>
+                    <input
+                      type="number"
+                      placeholder="Enter number of participants"
+                      value={newEvent.participants}
+                      onChange={(e) => setNewEvent({ ...newEvent, participants: e.target.value })}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                      }}
+                    />
+                  </div>
+
+                  <div className="modal-detail-item" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <label className="modal-detail-label" style={{ fontWeight: 'bold' }}>Prize Pool *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g., Rs 50,000"
+                      value={newEvent.prizePool}
+                      onChange={(e) => setNewEvent({ ...newEvent, prizePool: e.target.value })}
+                      style={{
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        background: 'rgba(0,0,0,0.3)',
+                        color: '#fff',
+                        fontSize: '1rem',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="modal-action-buttons" style={{ marginTop: '20px' }}>
+                  <button
+                    className="modal-action-btn verify"
+                    onClick={handleAddEvent}
+                    style={{ flex: 1 }}
+                  >
+                    ✅ Create Event
+                  </button>
+                  <button
+                    className="modal-action-btn reject"
+                    onClick={() => setShowAddEventModal(false)}
+                    style={{ flex: 1 }}
+                  >
+                    ❌ Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Detail Modal */}
       {selectedPayment && (
