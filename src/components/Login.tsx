@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Register.css"; // Reuse the same CSS for consistent styling
 import { API_ENDPOINTS } from '../config/api';
+import { setCookie } from '../utils/cookies';
 
 interface LoginForm {
   email: string;
@@ -51,6 +52,9 @@ const Login = () => {
       localStorage.setItem("accessToken", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
       localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Store user role in cookie for route protection
+      setCookie("userRole", data.user.role, 7); // Cookie expires in 7 days
 
       alert(`Welcome back, ${data.user.playerName}!`);
       
