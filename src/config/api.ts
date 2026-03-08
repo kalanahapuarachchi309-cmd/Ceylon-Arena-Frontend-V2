@@ -25,4 +25,8 @@ export const API_ENDPOINTS = {
     STATUS: (id: string) => `${API_BASE_URL}/payments/${id}/review`,
     DELETE: (id: string) => `${API_BASE_URL}/payments/${id}`,
   },
+  REGISTRATIONS: {
+    LIST: `${API_BASE_URL}/registrations`,
+    GET_BY_ID: (id: string) => `${API_BASE_URL}/registrations/${id}`,
+  },
 };

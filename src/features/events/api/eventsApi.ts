@@ -22,7 +22,7 @@ const toQueryString = (params?: PaginationParams) => {
 export const eventsApi = {
   async getPublicEvents(params?: PaginationParams): Promise<EventEntity[]> {
     const response = await axiosInstance.get(`/events/public${toQueryString(params)}`);
-    return extractList<EventEntity>(unwrapApiData(response.data), ["events"]);
+    return extractList<EventEntity>(unwrapApiData(response.data), ["items"]);
   },
 
   async getPublicEventBySlug(slug: string): Promise<EventEntity> {
@@ -32,7 +32,7 @@ export const eventsApi = {
 
   async getEvents(params?: PaginationParams): Promise<EventEntity[]> {
     const response = await axiosInstance.get(`/events${toQueryString(params)}`);
-    return extractList<EventEntity>(unwrapApiData(response.data), ["events"]);
+    return extractList<EventEntity>(unwrapApiData(response.data), ["items"]);
   },
 
   async getEventById(id: string): Promise<EventEntity> {
