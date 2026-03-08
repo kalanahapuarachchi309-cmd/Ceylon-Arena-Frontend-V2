@@ -23,13 +23,35 @@ import HomeNavigation from "../components/HomeNavigation";
 import LiveEventsSection from "../components/LiveEventsSection";
 import StatsBarSection from "../components/StatsBarSection";
 import { APP_ROUTES } from "../../../shared/constants/routes";
+import { useAuth } from "../../auth/hooks/useAuth";
+import { UserRole } from "../../../shared/types";
 
 import "../../../components/HomePage.css";
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
+
+  const handleRegisterClick = () => {
+    if (!isAuthenticated || !user) {
+      navigate(APP_ROUTES.REGISTER);
+      return;
+    }
+
+    if (user.role === UserRole.ADMIN) {
+      navigate(APP_ROUTES.ADMIN_DASHBOARD);
+      return;
+    }
+
+    if (window.location.pathname === APP_ROUTES.HOME || window.location.pathname === APP_ROUTES.EVENTS) {
+      window.location.hash = "events";
+      return;
+    }
+
+    navigate(`${APP_ROUTES.HOME}#events`);
+  };
 
   const handleCardMouseMove = (event: MouseEvent<HTMLDivElement>) => {
     const element = event.currentTarget;
@@ -93,7 +115,7 @@ const HomePage = () => {
 
       <HeroSection
         logoImg={logoImg}
-        onRegister={() => navigate(APP_ROUTES.REGISTER)}
+        onRegister={handleRegisterClick}
         onCosplay={() => navigate(APP_ROUTES.COSPLAY)}
       />
 
@@ -106,20 +128,20 @@ const HomePage = () => {
         onSelectCard={setSelectedCard}
         onCardMouseMove={handleCardMouseMove}
         onCardMouseLeave={handleCardMouseLeave}
-        onRegister={() => navigate(APP_ROUTES.REGISTER)}
+        onRegister={handleRegisterClick}
       />
 
       <LiveEventsSection />
-      <StatsBarSection onRegister={() => navigate(APP_ROUTES.REGISTER)} />
+      <StatsBarSection onRegister={handleRegisterClick} />
       <AboutSection />
-      <CtaSection onRegister={() => navigate(APP_ROUTES.REGISTER)} />
+      <CtaSection onRegister={handleRegisterClick} />
       <ContactSection contactBannerImg={contactBannerImg} />
 
       <HomeFooter
         logoImg={logoImg}
         stripImages={stripImages}
-        onRegister={() => navigate(APP_ROUTES.REGISTER)}
-        onSignIn={() => navigate(APP_ROUTES.LOGIN)}
+        onRegister={handleRegisterClick}
+        onSignIn={() => navigate(APP_ROUTES.SIGN_IN)}
       />
     </>
   );

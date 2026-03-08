@@ -5,7 +5,7 @@ import LoginForm from "../components/LoginForm";
 import AuthErrorMessage from "../components/AuthErrorMessage";
 import { useAuth } from "../hooks/useAuth";
 import { APP_ROUTES } from "../../../shared/constants/routes";
-import { UserRole } from "../../../shared/types";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/Register.css";
@@ -19,6 +19,7 @@ const LoginPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { login } = useAuth();
+  const toast = useToast();
   const [formData, setFormData] = useState<LoginValues>({
     email: "",
     password: "",
@@ -60,17 +61,17 @@ const LoginPage = () => {
     setErrorMessage(null);
 
     try {
-      const session = await login({
+      await login({
         email: formData.email,
         password: formData.password,
       });
 
+      toast.success("Signed in successfully.");
+
       if (redirectTo) {
         navigate(redirectTo);
-      } else if (session.user.role === UserRole.ADMIN) {
-        navigate(APP_ROUTES.ADMIN_HOME);
       } else {
-        navigate(APP_ROUTES.PROFILE);
+        navigate(APP_ROUTES.HOME);
       }
     } catch (error) {
       setErrorMessage(getErrorMessage(error));

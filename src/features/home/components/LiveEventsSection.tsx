@@ -1,9 +1,17 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../auth/hooks/useAuth";
 import { usePublicEvents } from "../../events/hooks/useEvents";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 import { formatDate } from "../../../shared/lib/date";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
+import {
+  APP_ROUTES,
+  toEventRegistrationConfirmRoute,
+  toEventRoute,
+} from "../../../shared/constants/routes";
+import { UserRole } from "../../../shared/types";
 
 const formatDateParts = (value?: string) => {
   if (!value) {
@@ -23,6 +31,8 @@ const formatDateParts = (value?: string) => {
 
 const LiveEventsSection = () => {
   const navigate = useNavigate();
+  const toast = useToast();
+  const { isAuthenticated, user, isBootstrapping } = useAuth();
   const { events, isLoading, error } = usePublicEvents({ page: 1, limit: 100 });
 
   const visibleEvents = useMemo(() => events, [events]);
@@ -31,9 +41,29 @@ const LiveEventsSection = () => {
     if (!slug) {
       return;
     }
-    navigate(`/events/${slug}`, {
+    navigate(toEventRoute(slug), {
       state: eventId ? { eventId } : undefined,
     });
+  };
+
+  const handleEventRegister = (slug?: string) => {
+    if (!slug) {
+      return;
+    }
+
+    const targetPath = toEventRegistrationConfirmRoute(slug);
+
+    if (isBootstrapping || !isAuthenticated || !user) {
+      navigate(APP_ROUTES.SIGN_IN, { state: { redirectTo: targetPath } });
+      return;
+    }
+
+    if (user.role !== UserRole.PLAYER) {
+      toast.warning("Only player accounts can register for events.");
+      return;
+    }
+
+    navigate(targetPath);
   };
 
   return (
@@ -88,10 +118,10 @@ const LiveEventsSection = () => {
                   </div>
                   <button
                     className="btn btn-primary"
-                    onClick={() => handleEventOpen(event.slug, eventId)}
+                    onClick={() => handleEventRegister(event.slug)}
                     disabled={!event.slug}
                   >
-                    View & Register
+                    Register
                   </button>
                 </div>
               );

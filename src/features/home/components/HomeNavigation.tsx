@@ -2,6 +2,13 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/hooks/useAuth";
+import {
+  compactNavigationItems,
+  landingActionNavigation,
+  landingSectionNavigationItems,
+  type LandingAuthNavigationState,
+  type LandingNavigationAction,
+} from "../config/navigation";
 import { APP_ROUTES } from "../../../shared/constants/routes";
 import { UserRole } from "../../../shared/types";
 
@@ -13,10 +20,10 @@ interface HomeNavigationProps {
   onCosplay?: () => void;
 }
 
-interface NavLinkItem {
-  label: string;
-  to: string;
-}
+const cosplayButtonStyle = {
+  background: "linear-gradient(135deg,#b44dff,#ff2d78)",
+  boxShadow: "0 6px 24px rgba(180,77,255,0.45)",
+} as const;
 
 const HomeNavigation = ({
   mobileMenuOpen,
@@ -34,6 +41,7 @@ const HomeNavigation = ({
     logout,
     refreshTeamSummary,
   } = useAuth();
+
   const isPlayer = user?.role === UserRole.PLAYER;
   const isAdmin = user?.role === UserRole.ADMIN;
   const showAuthenticatedUi = !isBootstrapping && isAuthenticated;
@@ -44,56 +52,44 @@ const HomeNavigation = ({
     }
 
     void refreshTeamSummary();
-  }, [isAuthenticated, isBootstrapping, isPlayer, refreshTeamSummary, teamSummary?.teamName]);
+  }, [
+    isAuthenticated,
+    isBootstrapping,
+    isPlayer,
+    refreshTeamSummary,
+    teamSummary?.teamName,
+  ]);
 
-  const playerIdentity = useMemo(() => {
-    const leaderName = user?.fullName || user?.playerName || "Leader";
-    const teamName = teamSummary?.teamName || "Team";
-    return `${teamName} (${leaderName})`;
-  }, [teamSummary?.teamName, user?.fullName, user?.playerName]);
+  const primaryLinks = showSectionLinks
+    ? landingSectionNavigationItems
+    : compactNavigationItems;
 
-  const baseLinks: NavLinkItem[] = showSectionLinks
-    ? [
-        { label: "Home", to: "#home" },
-        { label: "Games", to: "#games" },
-        { label: "Events", to: "#events" },
-        { label: "About", to: "#about" },
-        { label: "Contact Us", to: "#contact" },
-      ]
-    : [
-        { label: "Home", to: APP_ROUTES.HOME },
-        { label: "Events", to: APP_ROUTES.EVENTS },
-      ];
+  const authNavigationState = useMemo<LandingAuthNavigationState>(() => {
+    if (!showAuthenticatedUi) {
+      return "guest";
+    }
+    return isAdmin ? "admin" : "player";
+  }, [isAdmin, showAuthenticatedUi]);
 
-  const playerLinks: NavLinkItem[] = [
-    { label: "Profile", to: APP_ROUTES.PROFILE },
-    { label: "My Team", to: APP_ROUTES.MY_TEAM },
-    { label: "My Registrations", to: APP_ROUTES.MY_REGISTRATIONS },
-    { label: "My Payments", to: APP_ROUTES.MY_PAYMENTS },
-    { label: "Settings", to: APP_ROUTES.SETTINGS },
-  ];
+  const actionNavigationItems = landingActionNavigation[authNavigationState];
 
-  const adminLinks: NavLinkItem[] = [
-    { label: "Admin Users", to: APP_ROUTES.ADMIN_USERS },
-    { label: "Admin Teams", to: APP_ROUTES.ADMIN_TEAMS },
-    { label: "Admin Events", to: APP_ROUTES.ADMIN_EVENTS },
-    { label: "Admin Registrations", to: APP_ROUTES.ADMIN_REGISTRATIONS },
-    { label: "Admin Payments", to: APP_ROUTES.ADMIN_PAYMENTS },
-    { label: "Profile", to: APP_ROUTES.PROFILE },
-  ];
-
-  const handleLinkNavigate = (to: string) => {
-    if (to.startsWith("#")) {
-      if (window.location.pathname !== APP_ROUTES.HOME && window.location.pathname !== APP_ROUTES.EVENTS) {
-        navigate(`${APP_ROUTES.HOME}${to}`);
-      } else {
-        window.location.hash = to.slice(1);
-      }
+  const handleSectionNavigate = (to: string) => {
+    if (!to.startsWith("#")) {
+      navigate(to);
       onCloseMenu();
       return;
     }
 
-    navigate(to);
+    if (
+      window.location.pathname !== APP_ROUTES.HOME &&
+      window.location.pathname !== APP_ROUTES.EVENTS
+    ) {
+      navigate(`${APP_ROUTES.HOME}${to}`);
+      onCloseMenu();
+      return;
+    }
+
+    window.location.hash = to.slice(1);
     onCloseMenu();
   };
 
@@ -103,7 +99,21 @@ const HomeNavigation = ({
     onCloseMenu();
   };
 
-  const authLinks = showAuthenticatedUi ? (isAdmin ? adminLinks : playerLinks) : [];
+  const handleAction = async (item: LandingNavigationAction) => {
+    if (item.to === "logout") {
+      await handleLogout();
+      return;
+    }
+
+    if (item.label === "Cosplay" && onCosplay) {
+      onCosplay();
+      onCloseMenu();
+      return;
+    }
+
+    navigate(item.to);
+    onCloseMenu();
+  };
 
   return (
     <nav className="nav">
@@ -122,13 +132,13 @@ const HomeNavigation = ({
           </button>
 
           <ul className={`nav-links ${mobileMenuOpen ? "mobile-active" : ""}`}>
-            {baseLinks.map((link) => (
+            {primaryLinks.map((link) => (
               <li key={link.label}>
                 <a
                   href={link.to.startsWith("#") ? link.to : undefined}
                   onClick={(event) => {
                     event.preventDefault();
-                    handleLinkNavigate(link.to);
+                    handleSectionNavigate(link.to);
                   }}
                 >
                   {link.label}
@@ -136,128 +146,33 @@ const HomeNavigation = ({
               </li>
             ))}
 
-            {authLinks.map((link) => (
-              <li key={link.label}>
-                <a
-                  href={link.to}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    handleLinkNavigate(link.to);
-                  }}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-
-            {!showAuthenticatedUi ? (
-              <>
-                <li className="mobile-only">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      navigate(APP_ROUTES.LOGIN);
-                      onCloseMenu();
-                    }}
-                    style={{ width: "100%" }}
-                  >
-                    Sign In
-                  </button>
-                </li>
-                <li className="mobile-only">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      navigate(APP_ROUTES.REGISTER);
-                      onCloseMenu();
-                    }}
-                    style={{ width: "100%" }}
-                  >
-                    Register Your Team
-                  </button>
-                </li>
-              </>
-            ) : (
-              <>
-                <li className="mobile-only">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      if (isAdmin) {
-                        navigate(APP_ROUTES.ADMIN_HOME);
-                      } else {
-                        navigate(APP_ROUTES.PROFILE);
-                      }
-                      onCloseMenu();
-                    }}
-                    style={{ width: "100%" }}
-                  >
-                    {isAdmin ? `Admin (${user?.fullName || user?.playerName || "User"})` : playerIdentity}
-                  </button>
-                </li>
-                <li className="mobile-only">
-                  <button className="btn btn-secondary" onClick={() => void handleLogout()} style={{ width: "100%" }}>
-                    Logout
-                  </button>
-                </li>
-              </>
-            )}
-
-            {!showAuthenticatedUi && onCosplay ? (
-              <li className="mobile-only">
+            {actionNavigationItems.map((item) => (
+              <li className="mobile-only" key={item.label}>
                 <button
-                  className="btn btn-primary"
-                  onClick={() => {
-                    onCosplay();
-                    onCloseMenu();
-                  }}
+                  className={item.label === "Cosplay" ? "btn btn-primary" : "btn btn-secondary"}
+                  onClick={() => void handleAction(item)}
                   style={{
                     width: "100%",
-                    background: "linear-gradient(135deg,#b44dff,#ff2d78)",
-                    boxShadow: "0 6px 24px rgba(180,77,255,0.45)",
+                    ...(item.label === "Cosplay" ? cosplayButtonStyle : {}),
                   }}
                 >
-                  Cosplay Registration
+                  {item.label}
                 </button>
               </li>
-            ) : null}
+            ))}
           </ul>
 
           <div className="nav-cta desktop-only">
-            {!showAuthenticatedUi ? (
-              <>
-                <button className="btn btn-secondary" onClick={() => navigate(APP_ROUTES.LOGIN)}>
-                  Sign In
-                </button>
-                <button className="btn btn-secondary" onClick={() => navigate(APP_ROUTES.REGISTER)}>
-                  Register Your Team
-                </button>
-                {onCosplay ? (
-                  <button
-                    className="btn btn-primary"
-                    onClick={onCosplay}
-                    style={{
-                      background: "linear-gradient(135deg,#b44dff,#ff2d78)",
-                      boxShadow: "0 6px 24px rgba(180,77,255,0.45)",
-                    }}
-                  >
-                    Cosplay
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => navigate(isAdmin ? APP_ROUTES.ADMIN_HOME : APP_ROUTES.PROFILE)}
-                >
-                  {isAdmin ? `Admin (${user?.fullName || user?.playerName || "User"})` : playerIdentity}
-                </button>
-                <button className="btn btn-secondary" onClick={() => void handleLogout()}>
-                  Logout
-                </button>
-              </>
-            )}
+            {actionNavigationItems.map((item) => (
+              <button
+                key={item.label}
+                className={item.label === "Cosplay" ? "btn btn-primary" : "btn btn-secondary"}
+                onClick={() => void handleAction(item)}
+                style={item.label === "Cosplay" ? cosplayButtonStyle : undefined}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>

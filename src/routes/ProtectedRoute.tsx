@@ -16,7 +16,7 @@ const ProtectedRoute = ({ requiredRole }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to={APP_ROUTES.LOGIN} replace />;
+    return <Navigate to={APP_ROUTES.SIGN_IN} replace />;
   }
 
   if (requiredRole && user.role !== requiredRole) {
@@ -27,4 +27,3 @@ const ProtectedRoute = ({ requiredRole }: ProtectedRouteProps) => {
 };
 
 export default ProtectedRoute;
-

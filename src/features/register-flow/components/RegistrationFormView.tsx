@@ -4,6 +4,7 @@ import type { RegistrationFormValues } from "./register.types";
 
 interface RegistrationFormViewProps {
   formData: RegistrationFormValues;
+  fieldErrors: Partial<Record<keyof RegistrationFormValues, string>>;
   loading: boolean;
   onCancel: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -12,6 +13,7 @@ interface RegistrationFormViewProps {
 
 const RegistrationFormView = ({
   formData,
+  fieldErrors,
   loading,
   onCancel,
   onSubmit,
@@ -37,8 +39,10 @@ const RegistrationFormView = ({
             value={formData.fullName}
             onChange={onInputChange}
             placeholder="Enter your full name"
+            aria-invalid={Boolean(fieldErrors.fullName)}
             required
           />
+          {fieldErrors.fullName ? <p className="form-inline-error">{fieldErrors.fullName}</p> : null}
         </div>
 
         <div className="form-group">
@@ -50,8 +54,10 @@ const RegistrationFormView = ({
             value={formData.email}
             onChange={onInputChange}
             placeholder="your.email@example.com"
+            aria-invalid={Boolean(fieldErrors.email)}
             required
           />
+          {fieldErrors.email ? <p className="form-inline-error">{fieldErrors.email}</p> : null}
         </div>
 
         <div className="form-group">
@@ -63,8 +69,10 @@ const RegistrationFormView = ({
             value={formData.password}
             onChange={onInputChange}
             placeholder="Enter your password"
+            aria-invalid={Boolean(fieldErrors.password)}
             required
           />
+          {fieldErrors.password ? <p className="form-inline-error">{fieldErrors.password}</p> : null}
         </div>
 
         <div className="form-group">
@@ -76,8 +84,10 @@ const RegistrationFormView = ({
             value={formData.phone}
             onChange={onInputChange}
             placeholder="+94771234567"
+            aria-invalid={Boolean(fieldErrors.phone)}
             required
           />
+          {fieldErrors.phone ? <p className="form-inline-error">{fieldErrors.phone}</p> : null}
         </div>
 
         <div className="form-group">
@@ -89,8 +99,10 @@ const RegistrationFormView = ({
             value={formData.address}
             onChange={onInputChange}
             placeholder="Enter your address"
+            aria-invalid={Boolean(fieldErrors.address)}
             required
           />
+          {fieldErrors.address ? <p className="form-inline-error">{fieldErrors.address}</p> : null}
         </div>
 
         <div className="form-group">
@@ -114,8 +126,10 @@ const RegistrationFormView = ({
             value={formData.leaderInGameId}
             onChange={onInputChange}
             placeholder="Enter leader in-game id"
+            aria-invalid={Boolean(fieldErrors.leaderInGameId)}
             required
           />
+          {fieldErrors.leaderInGameId ? <p className="form-inline-error">{fieldErrors.leaderInGameId}</p> : null}
         </div>
       </div>
 
@@ -131,8 +145,10 @@ const RegistrationFormView = ({
             value={formData.teamName}
             onChange={onInputChange}
             placeholder="Enter your team name"
+            aria-invalid={Boolean(fieldErrors.teamName)}
             required
           />
+          {fieldErrors.teamName ? <p className="form-inline-error">{fieldErrors.teamName}</p> : null}
         </div>
 
         <div className="form-group">
@@ -144,8 +160,10 @@ const RegistrationFormView = ({
             value={formData.primaryGame}
             onChange={onInputChange}
             placeholder="Enter team primary game"
+            aria-invalid={Boolean(fieldErrors.primaryGame)}
             required
           />
+          {fieldErrors.primaryGame ? <p className="form-inline-error">{fieldErrors.primaryGame}</p> : null}
         </div>
       </div>
 
@@ -162,8 +180,10 @@ const RegistrationFormView = ({
               value={formData.member1Name}
               onChange={onInputChange}
               placeholder="Enter player 2 name"
+              aria-invalid={Boolean(fieldErrors.member1Name)}
               required
             />
+            {fieldErrors.member1Name ? <p className="form-inline-error">{fieldErrors.member1Name}</p> : null}
           </div>
 
           <div className="form-group">
@@ -175,8 +195,12 @@ const RegistrationFormView = ({
               value={formData.member1InGameId}
               onChange={onInputChange}
               placeholder="Enter player 2 in-game id"
+              aria-invalid={Boolean(fieldErrors.member1InGameId)}
               required
             />
+            {fieldErrors.member1InGameId ? (
+              <p className="form-inline-error">{fieldErrors.member1InGameId}</p>
+            ) : null}
           </div>
         </div>
 
@@ -190,8 +214,10 @@ const RegistrationFormView = ({
               value={formData.member2Name}
               onChange={onInputChange}
               placeholder="Enter player 3 name"
+              aria-invalid={Boolean(fieldErrors.member2Name)}
               required
             />
+            {fieldErrors.member2Name ? <p className="form-inline-error">{fieldErrors.member2Name}</p> : null}
           </div>
 
           <div className="form-group">
@@ -203,8 +229,12 @@ const RegistrationFormView = ({
               value={formData.member2InGameId}
               onChange={onInputChange}
               placeholder="Enter player 3 in-game id"
+              aria-invalid={Boolean(fieldErrors.member2InGameId)}
               required
             />
+            {fieldErrors.member2InGameId ? (
+              <p className="form-inline-error">{fieldErrors.member2InGameId}</p>
+            ) : null}
           </div>
         </div>
 
@@ -218,8 +248,10 @@ const RegistrationFormView = ({
               value={formData.member3Name}
               onChange={onInputChange}
               placeholder="Enter player 4 name"
+              aria-invalid={Boolean(fieldErrors.member3Name)}
               required
             />
+            {fieldErrors.member3Name ? <p className="form-inline-error">{fieldErrors.member3Name}</p> : null}
           </div>
 
           <div className="form-group">
@@ -231,8 +263,12 @@ const RegistrationFormView = ({
               value={formData.member3InGameId}
               onChange={onInputChange}
               placeholder="Enter player 4 in-game id"
+              aria-invalid={Boolean(fieldErrors.member3InGameId)}
               required
             />
+            {fieldErrors.member3InGameId ? (
+              <p className="form-inline-error">{fieldErrors.member3InGameId}</p>
+            ) : null}
           </div>
         </div>
       </div>

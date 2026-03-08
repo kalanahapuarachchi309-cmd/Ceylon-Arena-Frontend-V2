@@ -9,6 +9,7 @@ import {
   type RegistrationFormValues,
 } from "../components/register.types";
 import { APP_ROUTES } from "../../../shared/constants/routes";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/Register.css";
@@ -16,9 +17,57 @@ import "../../../components/Register.css";
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const toast = useToast();
   const [formData, setFormData] = useState<RegistrationFormValues>(defaultRegistrationFormValues);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegistrationFormValues, string>>>({});
+
+  const validateForm = (values: RegistrationFormValues) => {
+    const errors: Partial<Record<keyof RegistrationFormValues, string>> = {};
+
+    if (values.fullName.trim().length < 3) {
+      errors.fullName = "Leader name must be at least 3 characters.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+      errors.email = "Enter a valid email address.";
+    }
+    if (values.password.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
+    }
+    if (values.phone.trim().length < 9) {
+      errors.phone = "Enter a valid phone number.";
+    }
+    if (values.address.trim().length < 5) {
+      errors.address = "Address is required.";
+    }
+    if (values.teamName.trim().length < 2) {
+      errors.teamName = "Team name is required.";
+    }
+    if (values.primaryGame.trim().length < 2) {
+      errors.primaryGame = "Primary game is required.";
+    }
+    if (values.leaderInGameId.trim().length < 2) {
+      errors.leaderInGameId = "Leader in-game ID is required.";
+    }
+
+    const memberFields: Array<[keyof RegistrationFormValues, keyof RegistrationFormValues]> = [
+      ["member1Name", "member1InGameId"],
+      ["member2Name", "member2InGameId"],
+      ["member3Name", "member3InGameId"],
+    ];
+
+    memberFields.forEach(([nameField, idField], index) => {
+      if (values[nameField].trim().length < 2) {
+        errors[nameField] = `Player ${index + 2} name is required.`;
+      }
+      if (values[idField].trim().length < 2) {
+        errors[idField] = `Player ${index + 2} in-game ID is required.`;
+      }
+    });
+
+    return errors;
+  };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -26,6 +75,14 @@ const RegisterPage = () => {
       ...prev,
       [name]: value,
     }));
+    setFieldErrors((prev) => {
+      if (!(name in prev)) {
+        return prev;
+      }
+      const nextErrors = { ...prev };
+      delete nextErrors[name as keyof RegistrationFormValues];
+      return nextErrors;
+    });
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -38,6 +95,14 @@ const RegisterPage = () => {
     setErrorMessage(null);
 
     try {
+      const validationErrors = validateForm(formData);
+      if (Object.keys(validationErrors).length > 0) {
+        setFieldErrors(validationErrors);
+        setErrorMessage("Please fix the highlighted form fields.");
+        toast.error("Please fix form errors before continuing.");
+        return;
+      }
+
       await register({
         fullName: formData.fullName,
         email: formData.email,
@@ -65,7 +130,9 @@ const RegisterPage = () => {
       });
 
       setFormData(defaultRegistrationFormValues);
-      navigate(APP_ROUTES.LOGIN, {
+      setFieldErrors({});
+      toast.success("Team registration completed. Please sign in.");
+      navigate(APP_ROUTES.SIGN_IN, {
         replace: true,
         state: {
           registered: true,
@@ -73,7 +140,9 @@ const RegisterPage = () => {
         },
       });
     } catch (submitError) {
-      setErrorMessage(getErrorMessage(submitError));
+      const message = getErrorMessage(submitError);
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -100,6 +169,7 @@ const RegisterPage = () => {
 
         <RegistrationFormView
           formData={formData}
+          fieldErrors={fieldErrors}
           loading={loading}
           onCancel={handleCancel}
           onSubmit={handleSubmit}

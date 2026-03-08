@@ -9,6 +9,10 @@ interface UseMyTeamOptions {
   enabled?: boolean;
 }
 
+const MY_TEAM_CACHE_TTL_MS = 30_000;
+let myTeamCache: { data: TeamEntity | null; timestamp: number } | null = null;
+let myTeamInflight: Promise<TeamEntity | null> | null = null;
+
 export const useMyTeam = ({ enabled = true }: UseMyTeamOptions = {}) => {
   const [team, setTeam] = useState<TeamEntity | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(enabled);
@@ -25,7 +29,19 @@ export const useMyTeam = ({ enabled = true }: UseMyTeamOptions = {}) => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await teamsApi.getMyTeam();
+      const now = Date.now();
+      if (myTeamCache && now - myTeamCache.timestamp < MY_TEAM_CACHE_TTL_MS) {
+        setTeam(myTeamCache.data);
+        return;
+      }
+
+      if (!myTeamInflight) {
+        myTeamInflight = teamsApi.getMyTeam().finally(() => {
+          myTeamInflight = null;
+        });
+      }
+      const result = await myTeamInflight;
+      myTeamCache = { data: result, timestamp: now };
       setTeam(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
@@ -40,6 +56,7 @@ export const useMyTeam = ({ enabled = true }: UseMyTeamOptions = {}) => {
 
   const update = useCallback(async (payload: UpdateTeamRequest) => {
     const updatedTeam = await teamsApi.updateMyTeam(payload);
+    myTeamCache = { data: updatedTeam, timestamp: Date.now() };
     setTeam(updatedTeam);
     return updatedTeam;
   }, []);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+﻿import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import { useLocation, useMatch, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -12,9 +12,15 @@ import { teamsApi } from "../../teams/api/teamsApi";
 import type { TeamEntity } from "../../teams/types/team.types";
 import { usersApi } from "../../users/api/usersApi";
 import type { UserEntity } from "../../users/types/user.types";
-import { APP_ROUTES } from "../../../shared/constants/routes";
+import {
+  APP_ROUTES,
+  toAdminTeamDetailsRoute,
+  toAdminUserDetailsRoute,
+} from "../../../shared/constants/routes";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
 import { formatDateTime } from "../../../shared/lib/date";
+import { ConfirmPopup } from "../../../shared/components/custom-ui";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/AdminDashboard.css";
@@ -89,8 +95,11 @@ const toIsoDateTime = (value: string) => {
 const AdminDashboardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
   const userDetailMatch = useMatch(APP_ROUTES.ADMIN_USER_DETAILS);
   const teamDetailMatch = useMatch(APP_ROUTES.ADMIN_TEAM_DETAILS);
+  const legacyUserDetailMatch = useMatch("/admin/users/:id");
+  const legacyTeamDetailMatch = useMatch("/admin/teams/:id");
   const { user, logout } = useAuth();
 
   const [users, setUsers] = useState<UserEntity[]>([]);
@@ -116,15 +125,21 @@ const AdminDashboardPage = () => {
   const [message, setMessage] = useState<string | null>(null);
 
   const tab = useMemo(() => {
-    if (userDetailMatch?.params.id) return "user-detail";
-    if (teamDetailMatch?.params.id) return "team-detail";
+    if (userDetailMatch?.params.id || legacyUserDetailMatch?.params.id) return "user-detail";
+    if (teamDetailMatch?.params.id || legacyTeamDetailMatch?.params.id) return "team-detail";
     if (location.pathname === APP_ROUTES.ADMIN_USERS) return "users";
     if (location.pathname === APP_ROUTES.ADMIN_TEAMS) return "teams";
     if (location.pathname === APP_ROUTES.ADMIN_EVENTS) return "events";
     if (location.pathname === APP_ROUTES.ADMIN_REGISTRATIONS) return "registrations";
     if (location.pathname === APP_ROUTES.ADMIN_PAYMENTS) return "payments";
     return "overview";
-  }, [location.pathname, teamDetailMatch?.params.id, userDetailMatch?.params.id]);
+  }, [
+    legacyTeamDetailMatch?.params.id,
+    legacyUserDetailMatch?.params.id,
+    location.pathname,
+    teamDetailMatch?.params.id,
+    userDetailMatch?.params.id,
+  ]);
 
   const paymentsByRegistrationId = useMemo(() => {
     const map = new Map<string, PaymentEntity>();
@@ -170,14 +185,17 @@ const AdminDashboardPage = () => {
   useEffect(() => {
     const loadDetails = async () => {
       try {
-        if (userDetailMatch?.params.id) {
-          setSelectedUser(await usersApi.getUserById(userDetailMatch.params.id));
+        const selectedUserId = userDetailMatch?.params.id || legacyUserDetailMatch?.params.id;
+        const selectedTeamId = teamDetailMatch?.params.id || legacyTeamDetailMatch?.params.id;
+
+        if (selectedUserId) {
+          setSelectedUser(await usersApi.getUserById(selectedUserId));
         } else {
           setSelectedUser(null);
         }
 
-        if (teamDetailMatch?.params.id) {
-          setSelectedTeam(await teamsApi.getTeamById(teamDetailMatch.params.id));
+        if (selectedTeamId) {
+          setSelectedTeam(await teamsApi.getTeamById(selectedTeamId));
         } else {
           setSelectedTeam(null);
         }
@@ -186,7 +204,12 @@ const AdminDashboardPage = () => {
       }
     };
     void loadDetails();
-  }, [teamDetailMatch?.params.id, userDetailMatch?.params.id]);
+  }, [
+    legacyTeamDetailMatch?.params.id,
+    legacyUserDetailMatch?.params.id,
+    teamDetailMatch?.params.id,
+    userDetailMatch?.params.id,
+  ]);
 
   useEffect(() => {
     if (tab !== "registrations") {
@@ -201,9 +224,12 @@ const AdminDashboardPage = () => {
     try {
       await usersApi.changeUserRole(id, { role: role === "ADMIN" ? "PLAYER" : "ADMIN" });
       setMessage("User role updated.");
+      toast.success("User role updated.");
       await loadUsers();
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -211,9 +237,12 @@ const AdminDashboardPage = () => {
     try {
       await usersApi.changeUserStatus(id, { isActive: !isActive });
       setMessage("User status updated.");
+      toast.success("User status updated.");
       await loadUsers();
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -224,14 +253,18 @@ const AdminDashboardPage = () => {
       if (eventForm.id) {
         await eventsApi.updateEvent(eventForm.id, payload);
         setMessage("Event updated.");
+        toast.success("Event updated.");
       } else {
         await eventsApi.createEvent(payload);
         setMessage("Event created.");
+        toast.success("Event created.");
       }
       setEventForm(emptyEventForm);
       await loadEvents();
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -252,14 +285,18 @@ const AdminDashboardPage = () => {
       if (confirmAction.type === "delete-event") {
         await eventsApi.deleteEvent(confirmAction.id);
         setMessage("Event deleted.");
+        toast.success("Event deleted.");
         await loadEvents();
       } else if (confirmAction.type === "delete-payment") {
         await paymentsApi.deletePayment(confirmAction.id);
         setMessage("Payment deleted.");
+        toast.success("Payment deleted.");
         await loadPayments();
       }
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     } finally {
       setConfirmAction(null);
     }
@@ -275,7 +312,9 @@ const AdminDashboardPage = () => {
         notes: detail.notes || "",
       });
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -294,6 +333,7 @@ const AdminDashboardPage = () => {
     const registrationEntityId = resolveEntityId(selectedRegistration);
     if (!registrationEntityId) {
       setError("Registration id is missing.");
+      toast.error("Registration id is missing.");
       return;
     }
 
@@ -303,10 +343,13 @@ const AdminDashboardPage = () => {
         notes: registrationReview.notes || undefined,
       });
       setMessage("Registration status updated.");
+      toast.success("Registration status updated.");
       await Promise.all([loadRegistrations(), loadPayments()]);
       await handleOpenRegistration(registrationEntityId);
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -320,7 +363,9 @@ const AdminDashboardPage = () => {
         adminNote: detail.adminNote || "",
       });
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -337,6 +382,7 @@ const AdminDashboardPage = () => {
     const paymentEntityId = resolveEntityId(selectedPayment);
     if (!paymentEntityId) {
       setError("Payment id is missing.");
+      toast.error("Payment id is missing.");
       return;
     }
 
@@ -346,10 +392,13 @@ const AdminDashboardPage = () => {
         adminNote: paymentReview.adminNote || undefined,
       });
       setMessage("Payment review updated.");
+      toast.success("Payment review updated.");
       await loadPayments();
       await handleOpenPayment(paymentEntityId);
     } catch (actionError) {
-      setError(getErrorMessage(actionError));
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -361,11 +410,11 @@ const AdminDashboardPage = () => {
           <h1 className="admin-title">ADMIN CONTROL CENTER</h1>
           <p className="admin-welcome">Welcome, {user?.fullName || user?.playerName || "Admin"}</p>
         </div>
-        <button className="btn-back-to-home" onClick={() => void logout().then(() => navigate(APP_ROUTES.LOGIN))}>Logout</button>
+        <button className="btn-back-to-home" onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}>Logout</button>
       </div>
 
       <div className="admin-nav">
-        <button className={`nav-btn ${tab === "overview" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_HOME)}>Overview</button>
+        <button className={`nav-btn ${tab === "overview" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_DASHBOARD)}>Overview</button>
         <button className={`nav-btn ${tab.startsWith("user") ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_USERS)}>Users</button>
         <button className={`nav-btn ${tab.startsWith("team") ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_TEAMS)}>Teams</button>
         <button className={`nav-btn ${tab === "events" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_EVENTS)}>Events</button>
@@ -396,7 +445,7 @@ const AdminDashboardPage = () => {
               <tr key={id || item.email}>
                 <td>{item.fullName || item.playerName}</td><td>{item.email}</td><td>{item.role}</td><td>{String(item.isActive ?? item.status ?? false)}</td>
                 <td>
-                  <button className="action-btn" disabled={!id} onClick={() => id && navigate(`/admin/users/${id}`)}>View</button>
+                  <button className="action-btn" disabled={!id} onClick={() => id && navigate(toAdminUserDetailsRoute(id))}>View</button>
                   <button className="action-btn" disabled={!id} onClick={() => id && handleRoleChange(id, item.role)}>Toggle Role</button>
                   <button className="action-btn" disabled={!id} onClick={() => id && handleStatusChange(id, item.isActive ?? item.status)}>Toggle Active</button>
                 </td>
@@ -417,7 +466,7 @@ const AdminDashboardPage = () => {
             <thead><tr><th>Team</th><th>Game</th><th>Leader</th><th>Active</th><th>Action</th></tr></thead>
             <tbody>{teams.map((item) => {
               const id = resolveEntityId(item);
-              return <tr key={id || item.teamName}><td>{item.teamName}</td><td>{item.primaryGame}</td><td>{item.leaderInGameId}</td><td>{String(item.isActive ?? false)}</td><td><button className="action-btn" disabled={!id} onClick={() => id && navigate(`/admin/teams/${id}`)}>View</button></td></tr>;
+              return <tr key={id || item.teamName}><td>{item.teamName}</td><td>{item.primaryGame}</td><td>{item.leaderInGameId}</td><td>{String(item.isActive ?? false)}</td><td><button className="action-btn" disabled={!id} onClick={() => id && navigate(toAdminTeamDetailsRoute(id))}>View</button></td></tr>;
             })}</tbody>
           </table>
         )}
@@ -536,37 +585,22 @@ const AdminDashboardPage = () => {
         )}
       </div>
 
-      {confirmAction ? (
-        <div className="payment-modal-overlay">
-          <div className="payment-modal" style={{ maxWidth: "560px" }}>
-            <button className="modal-close-btn" type="button" onClick={() => setConfirmAction(null)}>
-              ×
-            </button>
-            <div className="modal-header">
-              <div className="modal-title-info">
-                <h3 className="modal-player-name">Confirm Action</h3>
-                <p className="admin-subtitle">
-                  {confirmAction.type === "delete-event"
-                    ? "Delete this event permanently?"
-                    : "Delete this payment record permanently?"}
-                </p>
-              </div>
-            </div>
-            <div className="modal-body" style={{ gridTemplateColumns: "1fr" }}>
-              <div className="modal-action-buttons">
-                <button className="modal-action-btn reject" type="button" onClick={() => setConfirmAction(null)}>
-                  Cancel
-                </button>
-                <button className="modal-action-btn verify" type="button" onClick={() => void executeConfirmAction()}>
-                  Confirm
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <ConfirmPopup
+        isOpen={Boolean(confirmAction)}
+        title="Confirm Action"
+        message={
+          confirmAction?.type === "delete-event"
+            ? "Delete this event permanently?"
+            : "Delete this payment record permanently?"
+        }
+        confirmLabel="Confirm"
+        cancelLabel="Cancel"
+        onConfirm={() => void executeConfirmAction()}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 };
 
 export default AdminDashboardPage;
+

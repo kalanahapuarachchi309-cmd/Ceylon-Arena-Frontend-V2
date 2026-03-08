@@ -33,15 +33,18 @@ import { UserRole } from "../shared/types";
 
 export interface AuthContextValue {
   user: AuthUser | null;
+  role: UserRole | null;
   teamSummary: AuthTeamSummary | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isInitializing: boolean;
   isBootstrapping: boolean;
   login: (payload: LoginRequest) => Promise<AuthSession>;
   register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   restoreSession: () => Promise<void>;
+  refreshAuth: () => Promise<void>;
   refreshTeamSummary: () => Promise<void>;
   changePassword: (payload: ChangePasswordRequest) => Promise<void>;
 }
@@ -255,15 +258,18 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      role: user?.role ?? null,
       teamSummary,
       isAuthenticated: Boolean(user),
       isLoading: isBootstrapping,
+      isInitializing: isBootstrapping,
       isBootstrapping,
       login,
       register,
       logout,
       logoutAll,
       restoreSession,
+      refreshAuth: restoreSession,
       refreshTeamSummary,
       changePassword,
     }),

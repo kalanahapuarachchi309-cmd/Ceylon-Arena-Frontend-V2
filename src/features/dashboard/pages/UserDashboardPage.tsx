@@ -1,22 +1,29 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
-import { useLocation, useMatch, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/hooks/useAuth";
-import { usePublicEvents } from "../../events/hooks/useEvents";
 import { useMyPayments } from "../../payments/hooks/usePayments";
-import { paymentsApi } from "../../payments/api/paymentsApi";
-import type { PaymentEntity } from "../../payments/types/payment.types";
 import { useMyRegistrations } from "../../registrations/hooks/useRegistrations";
-import { registrationsApi } from "../../registrations/api/registrationsApi";
-import type { RegistrationEntity } from "../../registrations/types/registration.types";
 import { useMyTeam } from "../../teams/hooks/useTeams";
-import { APP_ROUTES } from "../../../shared/constants/routes";
+import {
+  APP_ROUTES,
+  toEventRoute,
+} from "../../../shared/constants/routes";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
 import { formatDateTime } from "../../../shared/lib/date";
-import { getErrorMessage } from "../../../shared/utils/errorHandler";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
+import {
+  ButtonLoadingState,
+  CustomFormSection,
+  CustomModal,
+  LoadingOverlay,
+} from "../../../shared/components/custom-ui";
 
 import "../../../components/Register.css";
 import "../../../components/UserDashboard.css";
+import "./UserDashboardPage.css";
+
+type PlayerDashboardTab = "team" | "events";
 
 interface TeamFormState {
   teamName: string;
@@ -28,17 +35,15 @@ interface TeamFormState {
   member2InGameId: string;
   member3Name: string;
   member3InGameId: string;
-  isActive: boolean;
 }
 
-interface PaymentFormState {
-  transactionReference: string;
-  bankName: string;
-  accountHolder: string;
-  slip: File | null;
+interface PasswordFormState {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
 }
 
-const defaultTeamForm: TeamFormState = {
+const defaultTeamFormState: TeamFormState = {
   teamName: "",
   primaryGame: "",
   leaderInGameId: "",
@@ -48,111 +53,51 @@ const defaultTeamForm: TeamFormState = {
   member2InGameId: "",
   member3Name: "",
   member3InGameId: "",
-  isActive: true,
 };
 
-const defaultPaymentForm: PaymentFormState = {
-  transactionReference: "",
-  bankName: "",
-  accountHolder: "",
-  slip: null,
+const defaultPasswordFormState: PasswordFormState = {
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
 };
+
+const resolveTabFromPath = (pathname: string): PlayerDashboardTab =>
+  pathname === APP_ROUTES.PLAYER_DASHBOARD_EVENTS ? "events" : "team";
 
 const UserDashboardPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const registrationDetailMatch = useMatch(APP_ROUTES.MY_REGISTRATION_DETAILS);
-  const paymentDetailMatch = useMatch(APP_ROUTES.MY_PAYMENT_DETAILS);
+  const toast = useToast();
+  const { user, isAuthenticated, isBootstrapping, logout, changePassword } = useAuth();
 
-  const { user, isAuthenticated, isBootstrapping, logout, logoutAll, changePassword } = useAuth();
-  const canLoadProtectedData = !isBootstrapping && isAuthenticated;
-  const registrationId = registrationDetailMatch?.params.id ?? null;
-  const paymentId = paymentDetailMatch?.params.id ?? null;
+  const canLoadData = !isBootstrapping && isAuthenticated;
+  const activeTab = resolveTabFromPath(location.pathname);
 
-  const shouldLoadPublicEvents = canLoadProtectedData && location.pathname === APP_ROUTES.DASHBOARD;
-  const shouldLoadRegistrations =
-    canLoadProtectedData &&
-    (
-      location.pathname === APP_ROUTES.MY_REGISTRATIONS ||
-      location.pathname === APP_ROUTES.MY_PAYMENTS ||
-      Boolean(registrationId) ||
-      Boolean(paymentId)
-    );
-  const shouldLoadPayments =
-    canLoadProtectedData &&
-    (
-      location.pathname === APP_ROUTES.MY_PAYMENTS ||
-      location.pathname === APP_ROUTES.MY_REGISTRATIONS ||
-      Boolean(registrationId) ||
-      Boolean(paymentId)
-    );
-
-  const publicEventsParams = useMemo(() => ({ page: 1, limit: 20 }), []);
-  const registrationsParams = useMemo(() => ({ page: 1, limit: 50 }), []);
-  const paymentsParams = useMemo(() => ({ page: 1, limit: 50 }), []);
-
-  const { events, isLoading: eventsLoading } = usePublicEvents(publicEventsParams, {
-    enabled: shouldLoadPublicEvents,
-  });
-  const { team, updateTeam, refetch: refetchTeam, isLoading: teamLoading } = useMyTeam({
-    enabled: canLoadProtectedData,
-  });
+  const {
+    team,
+    updateTeam,
+    refetch: refetchTeam,
+    isLoading: isTeamLoading,
+    error: teamError,
+  } = useMyTeam({ enabled: canLoadData });
   const {
     registrations,
-    isLoading: registrationsLoading,
-    refetch: refetchRegistrations,
-  } = useMyRegistrations(registrationsParams, { enabled: shouldLoadRegistrations });
+    isLoading: isRegistrationsLoading,
+    error: registrationsError,
+  } = useMyRegistrations({ page: 1, limit: 100 }, { enabled: canLoadData });
   const {
     payments,
-    submitPayment,
-    refetch: refetchPayments,
-    isLoading: paymentsLoading,
-  } = useMyPayments(paymentsParams, { enabled: shouldLoadPayments });
+    isLoading: isPaymentsLoading,
+    error: paymentsError,
+  } = useMyPayments({ page: 1, limit: 100 }, { enabled: canLoadData });
 
-  const [teamForm, setTeamForm] = useState<TeamFormState>(defaultTeamForm);
-  const [registrationDetail, setRegistrationDetail] = useState<RegistrationEntity | null>(null);
-  const [paymentDetail, setPaymentDetail] = useState<PaymentEntity | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [paymentForm, setPaymentForm] = useState<PaymentFormState>(defaultPaymentForm);
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "",
-    newPassword: "",
-    confirmPassword: "",
-  });
-  const [isUpdatingTeam, setIsUpdatingTeam] = useState(false);
-  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
-
-  const view = useMemo(() => {
-    if (registrationId) return "registration-detail";
-    if (paymentId) return "payment-detail";
-    if (location.pathname === APP_ROUTES.PROFILE) return "profile";
-    if (location.pathname === APP_ROUTES.DASHBOARD) return "dashboard";
-    if (location.pathname === APP_ROUTES.MY_TEAM) return "team";
-    if (location.pathname === APP_ROUTES.MY_REGISTRATIONS) return "registrations";
-    if (location.pathname === APP_ROUTES.MY_PAYMENTS) return "payments";
-    if (location.pathname === APP_ROUTES.SETTINGS || location.pathname === APP_ROUTES.CHANGE_PASSWORD) {
-      return "settings";
-    }
-    return "profile";
-  }, [location.pathname, paymentId, registrationId]);
-
-  const paymentsByRegistrationId = useMemo(() => {
-    const map = new Map<string, PaymentEntity>();
-    payments.forEach((paymentItem) => {
-      const parentRegistrationId =
-        paymentItem.registrationId || resolveEntityId(paymentItem.registration);
-      if (parentRegistrationId && !map.has(parentRegistrationId)) {
-        map.set(parentRegistrationId, paymentItem);
-      }
-    });
-    return map;
-  }, [payments]);
-
-  const registrationDetailId = useMemo(() => resolveEntityId(registrationDetail), [registrationDetail]);
-  const linkedPaymentForRegistration = registrationDetailId
-    ? paymentsByRegistrationId.get(registrationDetailId)
-    : undefined;
+  const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isSavingTeam, setIsSavingTeam] = useState(false);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [teamForm, setTeamForm] = useState<TeamFormState>(defaultTeamFormState);
+  const [passwordForm, setPasswordForm] = useState<PasswordFormState>(defaultPasswordFormState);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     setTeamForm({
@@ -165,61 +110,34 @@ const UserDashboardPage = () => {
       member2InGameId: team?.members?.[1]?.inGameId ?? "",
       member3Name: team?.members?.[2]?.name ?? "",
       member3InGameId: team?.members?.[2]?.inGameId ?? "",
-      isActive: team?.isActive ?? true,
     });
   }, [team]);
 
-  useEffect(() => {
-    const load = async () => {
-      if (!registrationId) {
-        setRegistrationDetail(null);
-        return;
+  const paymentByRegistrationId = useMemo(() => {
+    const map = new Map<string, (typeof payments)[number]>();
+    payments.forEach((paymentItem) => {
+      const targetRegistrationId =
+        paymentItem.registrationId || resolveEntityId(paymentItem.registration);
+      if (targetRegistrationId && !map.has(targetRegistrationId)) {
+        map.set(targetRegistrationId, paymentItem);
       }
+    });
+    return map;
+  }, [payments]);
 
-      try {
-        setError(null);
-        setRegistrationDetail(await registrationsApi.getRegistrationById(registrationId));
-      } catch (loadError) {
-        setError(getErrorMessage(loadError));
-      }
-    };
-    void load();
-  }, [registrationId]);
+  const combinedError = actionError ?? teamError ?? registrationsError ?? paymentsError ?? null;
+  const isLoading = isTeamLoading || isRegistrationsLoading || isPaymentsLoading;
 
-  useEffect(() => {
-    const load = async () => {
-      if (!paymentId) {
-        setPaymentDetail(null);
-        return;
-      }
-
-      try {
-        setError(null);
-        setPaymentDetail(await paymentsApi.getPaymentById(paymentId));
-      } catch (loadError) {
-        setError(getErrorMessage(loadError));
-      }
-    };
-    void load();
-  }, [paymentId]);
-
-  const showError = (value: unknown) => setError(getErrorMessage(value));
-
-  const handleTeamChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = event.target;
-    setTeamForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
+  const handleTeamFormChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = event.target;
+    setTeamForm((previous) => ({ ...previous, [name]: value }));
   };
 
   const handleTeamSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isUpdatingTeam) {
-      return;
-    }
-
-    setMessage(null);
-    setError(null);
+    setActionError(null);
+    setIsSavingTeam(true);
     try {
-      setIsUpdatingTeam(true);
       await updateTeam({
         teamName: teamForm.teamName,
         primaryGame: teamForm.primaryGame,
@@ -229,107 +147,86 @@ const UserDashboardPage = () => {
           { name: teamForm.member2Name, inGameId: teamForm.member2InGameId },
           { name: teamForm.member3Name, inGameId: teamForm.member3InGameId },
         ],
-        isActive: teamForm.isActive,
       });
-      setMessage("Team updated successfully.");
       await refetchTeam();
-    } catch (submitError) {
-      showError(submitError);
+      toast.success("Team information updated.");
+      setIsTeamModalOpen(false);
+    } catch {
+      setActionError("Unable to update team information.");
     } finally {
-      setIsUpdatingTeam(false);
+      setIsSavingTeam(false);
     }
   };
 
-  const handlePaymentFieldChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value, files } = event.target;
-    if (name === "slip") {
-      setPaymentForm((prev) => ({ ...prev, slip: files?.[0] ?? null }));
-      return;
-    }
-    setPaymentForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmitPayment = async (event: FormEvent<HTMLFormElement>) => {
+  const handlePasswordSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmittingPayment) {
-      return;
-    }
+    setActionError(null);
 
-    if (!registrationId) {
-      setError("Registration id is required.");
-      return;
-    }
-    if (
-      !paymentForm.slip ||
-      !paymentForm.transactionReference ||
-      !paymentForm.bankName ||
-      !paymentForm.accountHolder
-    ) {
-      setError("Please provide slip, transaction reference, bank name, and account holder.");
-      return;
-    }
-
-    setMessage(null);
-    setError(null);
-    try {
-      setIsSubmittingPayment(true);
-      const createdPayment = await submitPayment(registrationId, {
-        slip: paymentForm.slip,
-        transactionReference: paymentForm.transactionReference,
-        bankName: paymentForm.bankName,
-        accountHolder: paymentForm.accountHolder,
-      });
-      const paymentEntityId = resolveEntityId(createdPayment);
-      setMessage("Payment submitted successfully.");
-      setPaymentForm(defaultPaymentForm);
-      await refetchPayments();
-      await refetchRegistrations();
-      if (paymentEntityId) {
-        navigate(`/my-payments/${paymentEntityId}`);
-      }
-    } catch (submitError) {
-      showError(submitError);
-    } finally {
-      setIsSubmittingPayment(false);
-    }
-  };
-
-  const handlePasswordChange = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setError("Password confirmation does not match.");
+      setActionError("Password confirmation does not match.");
       return;
     }
-    setMessage(null);
-    setError(null);
+    if (passwordForm.newPassword.length < 8) {
+      setActionError("New password must contain at least 8 characters.");
+      return;
+    }
+
+    setIsSavingPassword(true);
     try {
       await changePassword({
         currentPassword: passwordForm.currentPassword,
         newPassword: passwordForm.newPassword,
       });
-      setMessage("Password changed successfully.");
-      setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
-    } catch (submitError) {
-      showError(submitError);
+      toast.success("Password changed successfully.");
+      setPasswordForm(defaultPasswordFormState);
+      setIsPasswordModalOpen(false);
+    } catch {
+      setActionError("Unable to change password.");
+    } finally {
+      setIsSavingPassword(false);
     }
   };
 
-  const isLoadingAny = eventsLoading || teamLoading || registrationsLoading || paymentsLoading;
+  const registrationCards = registrations.map((registration) => {
+    const registrationEntityId = resolveEntityId(registration);
+    const linkedPayment = registrationEntityId
+      ? paymentByRegistrationId.get(registrationEntityId)
+      : undefined;
+
+    return {
+      key: registrationEntityId || registration.eventId || registration.createdAt || Math.random().toString(),
+      eventTitle: registration.event?.title || "Event",
+      eventSlug: registration.event?.slug || "",
+      registrationStatus: registration.status,
+      registrationNotes: registration.notes || "-",
+      registrationUpdatedAt: formatDateTime(registration.updatedAt || registration.createdAt),
+      paymentStatus: linkedPayment?.status || "NOT_SUBMITTED",
+      paymentReference: linkedPayment?.transactionReference || "-",
+      paymentBank: linkedPayment?.bankName || "-",
+      paymentAccountHolder: linkedPayment?.accountHolder || "-",
+      paymentAdminNote: linkedPayment?.adminNote || "-",
+    };
+  });
 
   return (
     <div className="user-dashboard">
+      <LoadingOverlay
+        isVisible={isLoading && !team}
+        message="Loading dashboard..."
+      />
+
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="header-content">
             <h1>CEYLON ARENA PLAYER HUB</h1>
-            <div style={{ display: "flex", gap: "12px" }}>
+            <div className="dashboard-header-actions">
+              <button className="logout-btn" onClick={() => navigate(APP_ROUTES.HOME)}>
+                Home
+              </button>
               <button
                 className="logout-btn"
-                onClick={() => void logoutAll().then(() => navigate(APP_ROUTES.LOGIN))}
+                onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}
               >
-                Logout All
-              </button>
-              <button className="logout-btn" onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}>
                 Logout
               </button>
             </div>
@@ -337,487 +234,396 @@ const UserDashboardPage = () => {
         </div>
 
         <div className="dashboard-main">
-          <div className="sidebar">
+          <aside className="sidebar">
             <div className="profile-card">
               <h2 className="player-name">{user?.fullName || user?.playerName || "Player"}</h2>
               <div className="profile-info">
                 <div className="info-row">
-                  <span className="info-label">Email</span>
-                  <span className="info-value">{user?.email || "N/A"}</span>
+                  <span className="info-label">Team</span>
+                  <span className="info-value">{team?.teamName || "Not Available"}</span>
+                </div>
+                <div className="info-row">
+                  <span className="info-label">Leader Email</span>
+                  <span className="info-value">{user?.email || "-"}</span>
                 </div>
                 <div className="info-row">
                   <span className="info-label">Phone</span>
-                  <span className="info-value">{user?.phone || "N/A"}</span>
+                  <span className="info-value">{user?.phone || "-"}</span>
                 </div>
                 <div className="info-row">
-                  <span className="info-label">Role</span>
-                  <span className="info-value">{user?.role || "PLAYER"}</span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">Team</span>
-                  <span className="info-value">{team?.teamName || "N/A"}</span>
+                  <span className="info-label">Primary Game</span>
+                  <span className="info-value">{team?.primaryGame || "-"}</span>
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
 
-          <div className="content-area">
+          <main className="content-area">
             <div className="tabs-navigation">
-              <button className={`tab-btn ${view === "profile" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.PROFILE)}>
-                Profile
-              </button>
-              <button className={`tab-btn ${view === "dashboard" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.DASHBOARD)}>
-                Dashboard
-              </button>
-              <button className={`tab-btn ${view === "team" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.MY_TEAM)}>
-                My Team
+              <button
+                className={`tab-btn ${activeTab === "team" ? "active" : ""}`}
+                onClick={() => navigate(APP_ROUTES.PLAYER_DASHBOARD_TEAM)}
+              >
+                Team Info
               </button>
               <button
-                className={`tab-btn ${view.startsWith("registration") || view === "registrations" ? "active" : ""}`}
-                onClick={() => navigate(APP_ROUTES.MY_REGISTRATIONS)}
+                className={`tab-btn ${activeTab === "events" ? "active" : ""}`}
+                onClick={() => navigate(APP_ROUTES.PLAYER_DASHBOARD_EVENTS)}
               >
-                Registrations
-              </button>
-              <button
-                className={`tab-btn ${view.startsWith("payment") || view === "payments" ? "active" : ""}`}
-                onClick={() => navigate(APP_ROUTES.MY_PAYMENTS)}
-              >
-                Payments
-              </button>
-              <button className={`tab-btn ${view === "settings" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.SETTINGS)}>
-                Settings
+                Registered Events
               </button>
             </div>
 
-            {isLoadingAny ? <p className="register-subtitle">Loading account data...</p> : null}
-            {error ? <p className="register-subtitle">{error}</p> : null}
-            {message ? <p className="register-subtitle">{message}</p> : null}
+            {combinedError ? <p className="register-subtitle">{combinedError}</p> : null}
 
-            {view === "profile" && (
-              <>
-                <div className="overview-section">
-                  <h3>My Profile</h3>
-                  <div className="info-grid">
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Full Name</span>
-                        <span className="detail-value">{user?.fullName || user?.playerName || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Email</span>
-                        <span className="detail-value">{user?.email || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Phone</span>
-                        <span className="detail-value">{user?.phone || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Address</span>
-                        <span className="detail-value">{user?.address || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Role</span>
-                        <span className="detail-value">{user?.role || "PLAYER"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Account Active</span>
-                        <span className="detail-value">{String(user?.isActive ?? user?.status ?? true)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="overview-section">
-                  <h3>My Team</h3>
-                  <div className="info-grid">
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Team Name</span>
-                        <span className="detail-value">{team?.teamName || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Primary Game</span>
-                        <span className="detail-value">{team?.primaryGame || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Leader In-Game ID</span>
-                        <span className="detail-value">{team?.leaderInGameId || "N/A"}</span>
-                      </div>
-                    </div>
-                    <div className="info-card">
-                      <div className="info-details">
-                        <span className="detail-label">Members</span>
-                        <span className="detail-value">{team?.members?.length || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-
-            {view === "dashboard" && (
-              <div className="comparison-card">
-                <h4 className="comparison-title">Public Events</h4>
-                <table className="comparison-table">
-                  <thead>
-                    <tr>
-                      <th>Event</th>
-                      <th>Status</th>
-                      <th>Fee</th>
-                      <th>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {events.length === 0 ? (
-                      <tr>
-                        <td colSpan={4}>No public events available.</td>
-                      </tr>
-                    ) : (
-                      events.map((eventItem) => (
-                        <tr key={resolveEntityId(eventItem) || eventItem.slug}>
-                          <td>{eventItem.title}</td>
-                          <td>{eventItem.status}</td>
-                          <td>
-                            {eventItem.currency} {eventItem.entryFee}
-                          </td>
-                          <td>
-                            <button
-                              className="action-btn view-stats"
-                              onClick={() => navigate(`/events/${eventItem.slug}`)}
-                            >
-                              View / Register
-                            </button>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {view === "team" && (
-              <form className="registration-form" onSubmit={handleTeamSubmit}>
-                <div className="form-group">
-                  <label>Team Name</label>
-                  <input name="teamName" value={teamForm.teamName} onChange={handleTeamChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Primary Game</label>
-                  <input name="primaryGame" value={teamForm.primaryGame} onChange={handleTeamChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Leader In-Game ID</label>
-                  <input name="leaderInGameId" value={teamForm.leaderInGameId} onChange={handleTeamChange} required />
-                </div>
-                <div className="form-row-two-col">
-                  <div className="form-group">
-                    <label>Member 1</label>
-                    <input name="member1Name" value={teamForm.member1Name} onChange={handleTeamChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Member 1 In-Game ID</label>
-                    <input
-                      name="member1InGameId"
-                      value={teamForm.member1InGameId}
-                      onChange={handleTeamChange}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-row-two-col">
-                  <div className="form-group">
-                    <label>Member 2</label>
-                    <input name="member2Name" value={teamForm.member2Name} onChange={handleTeamChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Member 2 In-Game ID</label>
-                    <input
-                      name="member2InGameId"
-                      value={teamForm.member2InGameId}
-                      onChange={handleTeamChange}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-row-two-col">
-                  <div className="form-group">
-                    <label>Member 3</label>
-                    <input name="member3Name" value={teamForm.member3Name} onChange={handleTeamChange} required />
-                  </div>
-                  <div className="form-group">
-                    <label>Member 3 In-Game ID</label>
-                    <input
-                      name="member3InGameId"
-                      value={teamForm.member3InGameId}
-                      onChange={handleTeamChange}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="form-group" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <label>Active</label>
-                  <input type="checkbox" name="isActive" checked={teamForm.isActive} onChange={handleTeamChange} />
-                </div>
-                <div className="form-actions">
-                  <button className="btn btn-submit" type="submit" disabled={isUpdatingTeam}>
-                    {isUpdatingTeam ? "Updating..." : "Update Team"}
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {view === "registrations" && (
-              <table className="comparison-table">
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Registration Status</th>
-                    <th>Payment Status</th>
-                    <th>Transaction Ref</th>
-                    <th>Updated</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.length === 0 ? (
-                    <tr>
-                      <td colSpan={6}>No registrations found.</td>
-                    </tr>
-                  ) : (
-                    registrations.map((item) => {
-                      const id = resolveEntityId(item);
-                      const mappedPayment = id ? paymentsByRegistrationId.get(id) : undefined;
-                      return (
-                        <tr key={id || item.eventId}>
-                          <td>{item.event?.title || item.eventId}</td>
-                          <td>{item.status}</td>
-                          <td>{mappedPayment?.status || "NOT_SUBMITTED"}</td>
-                          <td>{mappedPayment?.transactionReference || "-"}</td>
-                          <td>{formatDateTime(item.updatedAt || item.createdAt)}</td>
-                          <td>
-                            <button
-                              className="action-btn view-stats"
-                              onClick={() => id && navigate(`/my-registrations/${id}`)}
-                            >
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {view === "registration-detail" && registrationDetail && (
-              <>
+            {activeTab === "team" ? (
+              <section className="overview-section">
+                <h3>Team Information</h3>
                 <div className="info-grid">
                   <div className="info-card">
                     <div className="info-details">
-                      <span className="detail-label">Event</span>
-                      <span className="detail-value">{registrationDetail.event?.title || registrationDetail.eventId}</span>
+                      <span className="detail-label">Team Name</span>
+                      <span className="detail-value">{team?.teamName || "-"}</span>
                     </div>
                   </div>
                   <div className="info-card">
                     <div className="info-details">
-                      <span className="detail-label">Registration Status</span>
-                      <span className="detail-value">{registrationDetail.status}</span>
+                      <span className="detail-label">Primary Game</span>
+                      <span className="detail-value">{team?.primaryGame || "-"}</span>
                     </div>
                   </div>
                   <div className="info-card">
                     <div className="info-details">
-                      <span className="detail-label">Payment Status</span>
-                      <span className="detail-value">{linkedPaymentForRegistration?.status || "NOT_SUBMITTED"}</span>
+                      <span className="detail-label">Leader Name</span>
+                      <span className="detail-value">{user?.fullName || user?.playerName || "-"}</span>
                     </div>
                   </div>
                   <div className="info-card">
                     <div className="info-details">
-                      <span className="detail-label">Transaction Reference</span>
-                      <span className="detail-value">{linkedPaymentForRegistration?.transactionReference || "-"}</span>
+                      <span className="detail-label">Leader Email</span>
+                      <span className="detail-value">{user?.email || "-"}</span>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-details">
+                      <span className="detail-label">Phone</span>
+                      <span className="detail-value">{user?.phone || "-"}</span>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-details">
+                      <span className="detail-label">Address</span>
+                      <span className="detail-value">{user?.address || "-"}</span>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-details">
+                      <span className="detail-label">Leader In-Game ID</span>
+                      <span className="detail-value">{team?.leaderInGameId || "-"}</span>
+                    </div>
+                  </div>
+                  <div className="info-card">
+                    <div className="info-details">
+                      <span className="detail-label">Members</span>
+                      <span className="detail-value">{team?.members?.length || 0}</span>
                     </div>
                   </div>
                 </div>
 
-                {!linkedPaymentForRegistration || linkedPaymentForRegistration.status === "REJECTED" ? (
-                  <form className="registration-form" onSubmit={handleSubmitPayment}>
-                    <div className="form-group">
-                      <label>Transaction Reference *</label>
-                      <input
-                        name="transactionReference"
-                        value={paymentForm.transactionReference}
-                        onChange={handlePaymentFieldChange}
-                        required
-                      />
+                <div className="dashboard-member-list">
+                  {(team?.members ?? []).map((member, index) => (
+                    <div className="dashboard-member-item" key={`${member.name}-${index}`}>
+                      <span>{member.name}</span>
+                      <strong>{member.inGameId}</strong>
                     </div>
-                    <div className="form-group">
-                      <label>Bank Name *</label>
-                      <input name="bankName" value={paymentForm.bankName} onChange={handlePaymentFieldChange} required />
-                    </div>
-                    <div className="form-group">
-                      <label>Account Holder *</label>
-                      <input
-                        name="accountHolder"
-                        value={paymentForm.accountHolder}
-                        onChange={handlePaymentFieldChange}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Slip *</label>
-                      <input name="slip" type="file" accept="image/*" onChange={handlePaymentFieldChange} required />
-                    </div>
-                    <div className="form-actions">
-                      <button className="btn btn-submit" type="submit" disabled={isSubmittingPayment}>
-                        {isSubmittingPayment ? "Submitting..." : "Submit Payment"}
-                      </button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="comparison-card">
-                    <h4 className="comparison-title">Payment Submitted</h4>
-                    <p>Payment is already submitted for this registration.</p>
-                  </div>
-                )}
-              </>
-            )}
+                  ))}
+                </div>
 
-            {view === "payments" && (
-              <table className="comparison-table">
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Status</th>
-                    <th>Reference</th>
-                    <th>Created</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {payments.length === 0 ? (
-                    <tr>
-                      <td colSpan={5}>No payments found.</td>
-                    </tr>
-                  ) : (
-                    payments.map((item) => {
-                      const id = resolveEntityId(item);
-                      return (
-                        <tr key={id || item.registrationId}>
-                          <td>{item.registration?.event?.title || item.registrationId}</td>
-                          <td>{item.status}</td>
-                          <td>{item.transactionReference || "-"}</td>
-                          <td>{formatDateTime(item.createdAt)}</td>
-                          <td>
-                            <button className="action-btn view-stats" onClick={() => id && navigate(`/my-payments/${id}`)}>
-                              View
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            )}
-
-            {view === "payment-detail" && paymentDetail && (
-              <div className="info-grid">
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Status</span>
-                    <span className="detail-value">{paymentDetail.status}</span>
-                  </div>
-                </div>
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Reference</span>
-                    <span className="detail-value">{paymentDetail.transactionReference || "-"}</span>
-                  </div>
-                </div>
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Bank Name</span>
-                    <span className="detail-value">{paymentDetail.bankName || "-"}</span>
-                  </div>
-                </div>
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Account Holder</span>
-                    <span className="detail-value">{paymentDetail.accountHolder || "-"}</span>
-                  </div>
-                </div>
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Admin Note</span>
-                    <span className="detail-value">{paymentDetail.adminNote || "-"}</span>
-                  </div>
-                </div>
-                <div className="info-card">
-                  <div className="info-details">
-                    <span className="detail-label">Submitted At</span>
-                    <span className="detail-value">{formatDateTime(paymentDetail.createdAt)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {view === "settings" && (
-              <form className="registration-form" onSubmit={handlePasswordChange}>
-                <div className="form-group">
-                  <label>Current Password</label>
-                  <input
-                    type="password"
-                    value={passwordForm.currentPassword}
-                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>New Password</label>
-                  <input
-                    type="password"
-                    value={passwordForm.newPassword}
-                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Confirm Password</label>
-                  <input
-                    type="password"
-                    value={passwordForm.confirmPassword}
-                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="form-actions">
-                  <button className="btn btn-submit" type="submit">
+                <div className="dashboard-inline-actions">
+                  <button
+                    type="button"
+                    className="action-btn view-stats"
+                    onClick={() => setIsTeamModalOpen(true)}
+                  >
+                    Edit Team
+                  </button>
+                  <button
+                    type="button"
+                    className="action-btn play-btn"
+                    onClick={() => setIsPasswordModalOpen(true)}
+                  >
                     Change Password
                   </button>
-                  <button className="btn btn-cancel" type="button" onClick={() => void logoutAll().then(() => navigate(APP_ROUTES.LOGIN))}>
-                    Logout All Devices
-                  </button>
                 </div>
-              </form>
+              </section>
+            ) : (
+              <section className="overview-section">
+                <h3>Registered Events</h3>
+                {registrationCards.length === 0 ? (
+                  <div className="comparison-card">
+                    <h4 className="comparison-title">No Registered Events</h4>
+                    <p className="dashboard-card-subtle">
+                      Register from the landing page events section to see your submissions here.
+                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-submit"
+                      onClick={() => navigate(APP_ROUTES.EVENTS)}
+                    >
+                      Browse Events
+                    </button>
+                  </div>
+                ) : (
+                  <div className="registered-events-grid">
+                    {registrationCards.map((card) => (
+                      <article className="registered-event-card" key={card.key}>
+                        <div className="registered-event-header">
+                          <h4>{card.eventTitle}</h4>
+                          <span className="registered-event-status">{card.registrationStatus}</span>
+                        </div>
+                        <div className="registered-event-body">
+                          <div className="registered-event-line">
+                            <span>Registration Updated</span>
+                            <strong>{card.registrationUpdatedAt}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Payment Status</span>
+                            <strong>{card.paymentStatus}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Transaction Reference</span>
+                            <strong>{card.paymentReference}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Bank</span>
+                            <strong>{card.paymentBank}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Account Holder</span>
+                            <strong>{card.paymentAccountHolder}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Registration Notes</span>
+                            <strong>{card.registrationNotes}</strong>
+                          </div>
+                          <div className="registered-event-line">
+                            <span>Admin Note</span>
+                            <strong>{card.paymentAdminNote}</strong>
+                          </div>
+                        </div>
+                        {card.eventSlug ? (
+                          <button
+                            type="button"
+                            className="action-btn view-stats"
+                            onClick={() => navigate(toEventRoute(card.eventSlug))}
+                          >
+                            View Event
+                          </button>
+                        ) : null}
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </section>
             )}
-          </div>
+          </main>
         </div>
       </div>
+
+      <CustomModal
+        isOpen={isTeamModalOpen}
+        title="Edit Team Information"
+        subtitle="Update team details. Leader email remains read-only."
+        onClose={() => setIsTeamModalOpen(false)}
+      >
+        <form className="registration-form dashboard-modal-form" onSubmit={handleTeamSubmit}>
+          <CustomFormSection title="Team Details">
+            <div className="form-group">
+              <label>Team Name</label>
+              <input
+                name="teamName"
+                value={teamForm.teamName}
+                onChange={handleTeamFormChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Primary Game</label>
+              <input
+                name="primaryGame"
+                value={teamForm.primaryGame}
+                onChange={handleTeamFormChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Leader Email (Read Only)</label>
+              <input value={user?.email || ""} readOnly />
+            </div>
+            <div className="form-group">
+              <label>Leader In-Game ID</label>
+              <input
+                name="leaderInGameId"
+                value={teamForm.leaderInGameId}
+                onChange={handleTeamFormChange}
+                required
+              />
+            </div>
+          </CustomFormSection>
+
+          <CustomFormSection title="Team Members">
+            <div className="form-row-two-col">
+              <div className="form-group">
+                <label>Member 1 Name</label>
+                <input
+                  name="member1Name"
+                  value={teamForm.member1Name}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Member 1 In-Game ID</label>
+                <input
+                  name="member1InGameId"
+                  value={teamForm.member1InGameId}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-row-two-col">
+              <div className="form-group">
+                <label>Member 2 Name</label>
+                <input
+                  name="member2Name"
+                  value={teamForm.member2Name}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Member 2 In-Game ID</label>
+                <input
+                  name="member2InGameId"
+                  value={teamForm.member2InGameId}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-row-two-col">
+              <div className="form-group">
+                <label>Member 3 Name</label>
+                <input
+                  name="member3Name"
+                  value={teamForm.member3Name}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Member 3 In-Game ID</label>
+                <input
+                  name="member3InGameId"
+                  value={teamForm.member3InGameId}
+                  onChange={handleTeamFormChange}
+                  required
+                />
+              </div>
+            </div>
+          </CustomFormSection>
+
+          <div className="form-actions">
+            <ButtonLoadingState
+              type="submit"
+              className="btn btn-submit"
+              isLoading={isSavingTeam}
+              loadingLabel="Saving Team..."
+            >
+              Save Team
+            </ButtonLoadingState>
+            <button
+              type="button"
+              className="btn btn-cancel"
+              onClick={() => setIsTeamModalOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </CustomModal>
+
+      <CustomModal
+        isOpen={isPasswordModalOpen}
+        title="Change Password"
+        subtitle="Use your current password and choose a secure new password."
+        onClose={() => setIsPasswordModalOpen(false)}
+        maxWidth={640}
+      >
+        <form className="registration-form dashboard-modal-form" onSubmit={handlePasswordSubmit}>
+          <div className="form-group">
+            <label>Current Password</label>
+            <input
+              type="password"
+              value={passwordForm.currentPassword}
+              onChange={(event) =>
+                setPasswordForm((previous) => ({
+                  ...previous,
+                  currentPassword: event.target.value,
+                }))
+              }
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>New Password</label>
+            <input
+              type="password"
+              value={passwordForm.newPassword}
+              onChange={(event) =>
+                setPasswordForm((previous) => ({
+                  ...previous,
+                  newPassword: event.target.value,
+                }))
+              }
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Confirm New Password</label>
+            <input
+              type="password"
+              value={passwordForm.confirmPassword}
+              onChange={(event) =>
+                setPasswordForm((previous) => ({
+                  ...previous,
+                  confirmPassword: event.target.value,
+                }))
+              }
+              required
+            />
+          </div>
+
+          <div className="form-actions">
+            <ButtonLoadingState
+              type="submit"
+              className="btn btn-submit"
+              isLoading={isSavingPassword}
+              loadingLabel="Updating Password..."
+            >
+              Update Password
+            </ButtonLoadingState>
+            <button
+              type="button"
+              className="btn btn-cancel"
+              onClick={() => setIsPasswordModalOpen(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </CustomModal>
     </div>
   );
 };

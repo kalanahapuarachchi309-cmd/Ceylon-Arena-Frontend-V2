@@ -2,7 +2,6 @@ import { Navigate, Outlet } from "react-router-dom";
 
 import { useAuth } from "../features/auth/hooks/useAuth";
 import { APP_ROUTES } from "../shared/constants/routes";
-import { UserRole } from "../shared/types";
 
 const GuestRoute = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -15,12 +14,7 @@ const GuestRoute = () => {
     return <Outlet />;
   }
 
-  return (
-    <Navigate
-      to={user.role === UserRole.ADMIN ? APP_ROUTES.ADMIN_HOME : APP_ROUTES.PROFILE}
-      replace
-    />
-  );
+  return <Navigate to={APP_ROUTES.HOME} replace />;
 };
 
 export default GuestRoute;

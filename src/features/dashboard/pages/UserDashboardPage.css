@@ -1,0 +1,120 @@
+.dashboard-header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.dashboard-inline-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.dashboard-member-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.dashboard-member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid rgba(0, 255, 255, 0.16);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+.dashboard-member-item span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dashboard-member-item strong {
+  color: #00ffff;
+}
+
+.registered-events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.registered-event-card {
+  border: 2px solid rgba(0, 255, 255, 0.2);
+  border-radius: 14px;
+  padding: 18px;
+  background: linear-gradient(135deg, rgba(26, 31, 58, 0.7), rgba(45, 53, 97, 0.45));
+  box-shadow: 0 8px 28px rgba(0, 255, 255, 0.08);
+}
+
+.registered-event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.registered-event-header h4 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.05rem;
+}
+
+.registered-event-status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 0, 128, 0.4);
+  color: #ff66b2;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.registered-event-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.registered-event-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.24);
+  border: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.registered-event-line span {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 0.82rem;
+}
+
+.registered-event-line strong {
+  color: #ffffff;
+  text-align: right;
+  font-size: 0.82rem;
+}
+
+.dashboard-card-subtle {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 16px;
+}
+
+.dashboard-modal-form {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
