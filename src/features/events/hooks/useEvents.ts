@@ -1,27 +1,55 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { PaginationParams } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 import { eventsApi } from "../api/eventsApi";
 import type { EventEntity } from "../types/event.types";
 
-export const usePublicEvents = (params?: PaginationParams) => {
+interface UseEventsOptions {
+  enabled?: boolean;
+}
+
+export const usePublicEvents = (
+  params?: PaginationParams,
+  { enabled = true }: UseEventsOptions = {}
+) => {
+  const stableParams = useMemo<PaginationParams | undefined>(
+    () =>
+      params
+        ? {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            sortBy: params.sortBy,
+            sortOrder: params.sortOrder,
+          }
+        : undefined,
+    [params?.limit, params?.page, params?.search, params?.sortBy, params?.sortOrder]
+  );
+
   const [events, setEvents] = useState<EventEntity[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!enabled) {
+      setEvents([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      const result = await eventsApi.getPublicEvents(params);
+      const result = await eventsApi.getPublicEvents(stableParams);
       setEvents(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [enabled, stableParams]);
 
   useEffect(() => {
     void load();
@@ -30,23 +58,47 @@ export const usePublicEvents = (params?: PaginationParams) => {
   return { events, isLoading, error, refetch: load };
 };
 
-export const useEvents = (params?: PaginationParams) => {
+export const useEvents = (
+  params?: PaginationParams,
+  { enabled = true }: UseEventsOptions = {}
+) => {
+  const stableParams = useMemo<PaginationParams | undefined>(
+    () =>
+      params
+        ? {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            sortBy: params.sortBy,
+            sortOrder: params.sortOrder,
+          }
+        : undefined,
+    [params?.limit, params?.page, params?.search, params?.sortBy, params?.sortOrder]
+  );
+
   const [events, setEvents] = useState<EventEntity[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!enabled) {
+      setEvents([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      const result = await eventsApi.getEvents(params);
+      const result = await eventsApi.getEvents(stableParams);
       setEvents(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [enabled, stableParams]);
 
   useEffect(() => {
     void load();
@@ -54,4 +106,3 @@ export const useEvents = (params?: PaginationParams) => {
 
   return { events, isLoading, error, refetch: load };
 };
-

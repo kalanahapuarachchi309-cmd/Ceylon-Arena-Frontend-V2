@@ -10,6 +10,7 @@ export interface RegistrationFormValues {
   address: string;
   promoCode: string;
   teamName: string;
+  primaryGame: string;
   leaderInGameId: string;
   member1Name: string;
   member1InGameId: string;
@@ -46,6 +47,7 @@ export const defaultRegistrationFormValues: RegistrationFormValues = {
   address: "",
   promoCode: "",
   teamName: "",
+  primaryGame: "",
   leaderInGameId: "",
   member1Name: "",
   member1InGameId: "",

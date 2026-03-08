@@ -1,4 +1,4 @@
-import { axiosInstance } from "../../../shared/api/axiosInstance";
+import { axiosInstance, requestTokenRefresh } from "../../../shared/api/axiosInstance";
 import type { ApiSuccessResponse } from "../../../shared/types";
 import type { AuthSession, AuthUser, ChangePasswordRequest, LoginRequest, RegisterRequest } from "../../../shared/types";
 
@@ -103,9 +103,8 @@ const extractUser = (payload: unknown): AuthUser => {
 };
 
 export const authApi = {
-  async register(payload: RegisterRequest): Promise<AuthSession> {
-    const response = await axiosInstance.post("/auth/register", payload);
-    return extractSession(unwrapApiEnvelope(response.data));
+  async register(payload: RegisterRequest): Promise<void> {
+    await axiosInstance.post("/auth/register", payload);
   },
 
   async login(payload: LoginRequest): Promise<AuthSession> {
@@ -122,13 +121,13 @@ export const authApi = {
   },
 
   async refresh(): Promise<string> {
-    const response = await axiosInstance.post("/auth/refresh");
-    const payload = unwrapApiEnvelope(response.data);
-    return extractToken(payload);
+    return requestTokenRefresh();
   },
 
-  async me(): Promise<AuthUser> {
-    const response = await axiosInstance.get("/auth/me");
+  async me(options?: { skipAuthRefresh?: boolean }): Promise<AuthUser> {
+    const response = await axiosInstance.get("/auth/me", {
+      skipAuthRefresh: options?.skipAuthRefresh,
+    });
     const payload = unwrapApiEnvelope(response.data);
     return extractUser(payload);
   },

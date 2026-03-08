@@ -3,6 +3,8 @@ export const APP_ROUTES = {
   LOGIN: "/login",
   LOGIN_LEGACY: "/sign",
   REGISTER: "/register",
+  PROFILE: "/profile",
+  SETTINGS: "/settings",
   CHANGE_PASSWORD: "/change-password",
   EVENTS: "/events",
   EVENT_DETAILS: "/events/:slug",

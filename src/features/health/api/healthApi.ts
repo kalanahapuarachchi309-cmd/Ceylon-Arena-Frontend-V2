@@ -1,4 +1,5 @@
 import { axiosInstance } from "../../../shared/api/axiosInstance";
+import { env } from "../../../config/env";
 import { unwrapApiData } from "../../../shared/api/apiTypes";
 
 interface HealthPayload {
@@ -11,7 +12,7 @@ interface HealthPayload {
 export const healthApi = {
   async check(): Promise<HealthPayload> {
     const response = await axiosInstance.get("/health", {
-      baseURL: "http://localhost:5000",
+      baseURL: new URL(env.apiBaseUrl).origin,
     });
     return unwrapApiData(response.data);
   },

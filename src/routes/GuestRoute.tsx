@@ -17,11 +17,10 @@ const GuestRoute = () => {
 
   return (
     <Navigate
-      to={user.role === UserRole.ADMIN ? APP_ROUTES.ADMIN_HOME : APP_ROUTES.DASHBOARD}
+      to={user.role === UserRole.ADMIN ? APP_ROUTES.ADMIN_HOME : APP_ROUTES.PROFILE}
       replace
     />
   );
 };
 
 export default GuestRoute;
-

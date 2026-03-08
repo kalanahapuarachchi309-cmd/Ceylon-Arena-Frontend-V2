@@ -1,16 +1,27 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { PaginationParams } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 import { teamsApi } from "../api/teamsApi";
 import type { TeamEntity, UpdateTeamRequest } from "../types/team.types";
 
-export const useMyTeam = () => {
+interface UseMyTeamOptions {
+  enabled?: boolean;
+}
+
+export const useMyTeam = ({ enabled = true }: UseMyTeamOptions = {}) => {
   const [team, setTeam] = useState<TeamEntity | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!enabled) {
+      setIsLoading(false);
+      setError(null);
+      setTeam(null);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -21,7 +32,7 @@ export const useMyTeam = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
     void load();
@@ -37,6 +48,20 @@ export const useMyTeam = () => {
 };
 
 export const useTeams = (params?: PaginationParams) => {
+  const stableParams = useMemo<PaginationParams | undefined>(
+    () =>
+      params
+        ? {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            sortBy: params.sortBy,
+            sortOrder: params.sortOrder,
+          }
+        : undefined,
+    [params?.limit, params?.page, params?.search, params?.sortBy, params?.sortOrder]
+  );
+
   const [teams, setTeams] = useState<TeamEntity[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +70,14 @@ export const useTeams = (params?: PaginationParams) => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await teamsApi.getTeams(params);
+      const result = await teamsApi.getTeams(stableParams);
       setTeams(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [stableParams]);
 
   useEffect(() => {
     void load();
@@ -60,4 +85,3 @@ export const useTeams = (params?: PaginationParams) => {
 
   return { teams, isLoading, error, refetch: load };
 };
-

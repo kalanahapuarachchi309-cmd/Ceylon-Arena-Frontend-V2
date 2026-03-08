@@ -1,27 +1,55 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import type { PaginationParams } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 import { registrationsApi } from "../api/registrationsApi";
 import type { CreateRegistrationRequest, RegistrationEntity } from "../types/registration.types";
 
-export const useMyRegistrations = (params?: PaginationParams) => {
+interface UseMyRegistrationsOptions {
+  enabled?: boolean;
+}
+
+export const useMyRegistrations = (
+  params?: PaginationParams,
+  { enabled = true }: UseMyRegistrationsOptions = {}
+) => {
+  const stableParams = useMemo<PaginationParams | undefined>(
+    () =>
+      params
+        ? {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            sortBy: params.sortBy,
+            sortOrder: params.sortOrder,
+          }
+        : undefined,
+    [params?.limit, params?.page, params?.search, params?.sortBy, params?.sortOrder]
+  );
+
   const [registrations, setRegistrations] = useState<RegistrationEntity[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(enabled);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    if (!enabled) {
+      setRegistrations([]);
+      setError(null);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
-      const result = await registrationsApi.getMyRegistrations(params);
+      const result = await registrationsApi.getMyRegistrations(stableParams);
       setRegistrations(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [enabled, stableParams]);
 
   useEffect(() => {
     void load();
@@ -37,6 +65,20 @@ export const useMyRegistrations = (params?: PaginationParams) => {
 };
 
 export const useRegistrations = (params?: PaginationParams) => {
+  const stableParams = useMemo<PaginationParams | undefined>(
+    () =>
+      params
+        ? {
+            page: params.page,
+            limit: params.limit,
+            search: params.search,
+            sortBy: params.sortBy,
+            sortOrder: params.sortOrder,
+          }
+        : undefined,
+    [params?.limit, params?.page, params?.search, params?.sortBy, params?.sortOrder]
+  );
+
   const [registrations, setRegistrations] = useState<RegistrationEntity[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,14 +87,14 @@ export const useRegistrations = (params?: PaginationParams) => {
     try {
       setIsLoading(true);
       setError(null);
-      const result = await registrationsApi.getRegistrations(params);
+      const result = await registrationsApi.getRegistrations(stableParams);
       setRegistrations(result);
     } catch (loadError) {
       setError(getErrorMessage(loadError));
     } finally {
       setIsLoading(false);
     }
-  }, [params]);
+  }, [stableParams]);
 
   useEffect(() => {
     void load();
@@ -60,4 +102,3 @@ export const useRegistrations = (params?: PaginationParams) => {
 
   return { registrations, isLoading, error, refetch: load };
 };
-

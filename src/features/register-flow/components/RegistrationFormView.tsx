@@ -1,28 +1,26 @@
 import type { ChangeEvent, FormEvent } from "react";
 
-import type { GameData, RegistrationFormValues } from "./register.types";
+import type { RegistrationFormValues } from "./register.types";
 
 interface RegistrationFormViewProps {
   formData: RegistrationFormValues;
-  selectedGameData?: GameData;
   loading: boolean;
-  onBack: () => void;
+  onCancel: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onInputChange: (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
 
 const RegistrationFormView = ({
   formData,
-  selectedGameData,
   loading,
-  onBack,
+  onCancel,
   onSubmit,
   onInputChange,
 }: RegistrationFormViewProps) => (
   <div className="registration-form-container">
     <div className="selected-game-header">
-      <button className="btn-back" onClick={onBack}>
-        Back to Games
+      <button className="btn-back" onClick={onCancel} disabled={loading}>
+        Cancel
       </button>
     </div>
 
@@ -136,6 +134,19 @@ const RegistrationFormView = ({
             required
           />
         </div>
+
+        <div className="form-group">
+          <label htmlFor="primaryGame">Primary Game *</label>
+          <input
+            type="text"
+            id="primaryGame"
+            name="primaryGame"
+            value={formData.primaryGame}
+            onChange={onInputChange}
+            placeholder="Enter team primary game"
+            required
+          />
+        </div>
       </div>
 
       <div className="form-section">
@@ -230,7 +241,7 @@ const RegistrationFormView = ({
         <button type="submit" className="btn btn-submit" disabled={loading}>
           {loading ? "Creating Account..." : "Complete Registration"}
         </button>
-        <button type="button" className="btn btn-cancel" onClick={onBack} disabled={loading}>
+        <button type="button" className="btn btn-cancel" onClick={onCancel} disabled={loading}>
           Cancel
         </button>
       </div>
@@ -247,8 +258,8 @@ const RegistrationFormView = ({
           </defs>
           <text fontSize="20" fontWeight="bold" fill="#ffffff" letterSpacing="3" className="animated-text">
             <textPath href="#circlePath" startOffset="0%" textAnchor="start">
-              {selectedGameData?.name.toUpperCase()} | {selectedGameData?.description} |{" "}
-              {selectedGameData?.name.toUpperCase()} |
+              {(formData.primaryGame || "TEAM REGISTRATION").toUpperCase()} | LEADER ACCOUNT + TEAM |{" "}
+              {(formData.primaryGame || "TEAM REGISTRATION").toUpperCase()} |
             </textPath>
           </text>
         </svg>

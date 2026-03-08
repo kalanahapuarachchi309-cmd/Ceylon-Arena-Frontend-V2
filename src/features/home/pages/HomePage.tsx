@@ -22,6 +22,7 @@ import HomeFooter from "../components/HomeFooter";
 import HomeNavigation from "../components/HomeNavigation";
 import LiveEventsSection from "../components/LiveEventsSection";
 import StatsBarSection from "../components/StatsBarSection";
+import { APP_ROUTES } from "../../../shared/constants/routes";
 
 import "../../../components/HomePage.css";
 
@@ -86,12 +87,15 @@ const HomePage = () => {
         mobileMenuOpen={mobileMenuOpen}
         onToggleMenu={toggleMobileMenu}
         onCloseMenu={closeMobileMenu}
-        onSignIn={() => navigate("/sign")}
-        onRegister={() => navigate("/register")}
-        onCosplay={() => navigate("/cosplay")}
+        showSectionLinks
+        onCosplay={() => navigate(APP_ROUTES.COSPLAY)}
       />
 
-      <HeroSection logoImg={logoImg} onRegister={() => navigate("/register")} onCosplay={() => navigate("/cosplay")} />
+      <HeroSection
+        logoImg={logoImg}
+        onRegister={() => navigate(APP_ROUTES.REGISTER)}
+        onCosplay={() => navigate(APP_ROUTES.COSPLAY)}
+      />
 
       <FeaturedGamesSection
         freefireImg={freefireImg}
@@ -102,20 +106,20 @@ const HomePage = () => {
         onSelectCard={setSelectedCard}
         onCardMouseMove={handleCardMouseMove}
         onCardMouseLeave={handleCardMouseLeave}
-        onRegister={() => navigate("/register")}
+        onRegister={() => navigate(APP_ROUTES.REGISTER)}
       />
 
       <LiveEventsSection />
-      <StatsBarSection onRegister={() => navigate("/register")} />
+      <StatsBarSection onRegister={() => navigate(APP_ROUTES.REGISTER)} />
       <AboutSection />
-      <CtaSection onRegister={() => navigate("/register")} />
+      <CtaSection onRegister={() => navigate(APP_ROUTES.REGISTER)} />
       <ContactSection contactBannerImg={contactBannerImg} />
 
       <HomeFooter
         logoImg={logoImg}
         stripImages={stripImages}
-        onRegister={() => navigate("/register")}
-        onSignIn={() => navigate("/sign")}
+        onRegister={() => navigate(APP_ROUTES.REGISTER)}
+        onSignIn={() => navigate(APP_ROUTES.LOGIN)}
       />
     </>
   );

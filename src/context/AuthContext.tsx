@@ -3,12 +3,25 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from "react";
+import axios from "axios";
 
 import { authApi } from "../features/auth/api/authApi";
-import { clearAuthStorage, getAccessToken, getStoredUser, setAccessToken, setStoredUser } from "../shared/lib/storage";
+import { teamsApi } from "../features/teams/api/teamsApi";
+import {
+  clearAuthStorage,
+  getAccessToken,
+  getStoredTeamSummary,
+  getStoredUser,
+  removeStoredTeamSummary,
+  setAccessToken,
+  setStoredTeamSummary,
+  setStoredUser,
+  type AuthTeamSummary,
+} from "../shared/lib/storage";
 import type {
   AuthSession,
   AuthUser,
@@ -16,16 +29,20 @@ import type {
   LoginRequest,
   RegisterRequest,
 } from "../shared/types";
+import { UserRole } from "../shared/types";
 
 export interface AuthContextValue {
   user: AuthUser | null;
+  teamSummary: AuthTeamSummary | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isBootstrapping: boolean;
   login: (payload: LoginRequest) => Promise<AuthSession>;
-  register: (payload: RegisterRequest) => Promise<AuthSession>;
+  register: (payload: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
-  refreshSession: () => Promise<void>;
+  restoreSession: () => Promise<void>;
+  refreshTeamSummary: () => Promise<void>;
   changePassword: (payload: ChangePasswordRequest) => Promise<void>;
 }
 
@@ -36,67 +53,171 @@ const persistSession = (session: AuthSession) => {
   setStoredUser(session.user);
 };
 
-const clearSession = () => {
+const clearSessionStorage = () => {
   clearAuthStorage();
+};
+
+const isUnauthorizedError = (error: unknown) =>
+  axios.isAxiosError(error) && error.response?.status === 401;
+
+const runSessionRestore = async (): Promise<AuthUser | null> => {
+  const token = getAccessToken();
+  const storedUser = getStoredUser();
+
+  if (!token && !storedUser) {
+    clearSessionStorage();
+    return null;
+  }
+
+  try {
+    let profile: AuthUser | null = null;
+
+    if (token) {
+      try {
+        profile = await authApi.me({ skipAuthRefresh: true });
+      } catch (error) {
+        if (!isUnauthorizedError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    if (!profile) {
+      const refreshedToken = await authApi.refresh();
+      setAccessToken(refreshedToken);
+      profile = await authApi.me({ skipAuthRefresh: true });
+    }
+
+    setStoredUser(profile);
+    return profile;
+  } catch {
+    clearSessionStorage();
+    return null;
+  }
+};
+
+let sharedRestorePromise: Promise<AuthUser | null> | null = null;
+
+const restoreSessionShared = async () => {
+  if (!sharedRestorePromise) {
+    sharedRestorePromise = runSessionRestore().finally(() => {
+      sharedRestorePromise = null;
+    });
+  }
+
+  return sharedRestorePromise;
 };
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
   const [user, setUser] = useState<AuthUser | null>(getStoredUser());
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [teamSummary, setTeamSummary] = useState<AuthTeamSummary | null>(getStoredTeamSummary());
+  const [isBootstrapping, setIsBootstrapping] = useState<boolean>(true);
+  const isMountedRef = useRef<boolean>(true);
+  const teamSummaryPromiseRef = useRef<Promise<void> | null>(null);
 
   const applySession = useCallback((session: AuthSession) => {
     persistSession(session);
     setUser(session.user);
+    removeStoredTeamSummary();
+    setTeamSummary(null);
   }, []);
 
-  const refreshSession = useCallback(async () => {
-    const nextToken = await authApi.refresh();
-    setAccessToken(nextToken);
-    const profile = await authApi.me();
-    setStoredUser(profile);
-    setUser(profile);
+  const clearSessionState = useCallback(() => {
+    clearSessionStorage();
+    teamSummaryPromiseRef.current = null;
+    setUser(null);
+    setTeamSummary(null);
   }, []);
 
-  const bootstrapAuth = useCallback(async () => {
-    setIsLoading(true);
+  const restoreSession = useCallback(async () => {
+    setIsBootstrapping(true);
+
     try {
-      const profile = await authApi.me();
-      setStoredUser(profile);
+      const profile = await restoreSessionShared();
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setUser(profile);
 
-      if (!getAccessToken()) {
-        try {
-          const refreshedToken = await authApi.refresh();
-          setAccessToken(refreshedToken);
-        } catch {
-          // Session is still valid via cookies, token refresh can be deferred.
-        }
+      if (!profile || profile.role !== UserRole.PLAYER) {
+        removeStoredTeamSummary();
+        setTeamSummary(null);
+        return;
       }
-    } catch {
-      try {
-        await refreshSession();
-      } catch {
-        clearSession();
-        setUser(null);
+
+      const storedSummary = getStoredTeamSummary();
+      if (storedSummary?.ownerId === profile.id) {
+        setTeamSummary(storedSummary);
+      } else {
+        removeStoredTeamSummary();
+        setTeamSummary(null);
       }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsBootstrapping(false);
+      }
     }
-  }, [refreshSession]);
+  }, []);
+
+  const refreshTeamSummary = useCallback(async () => {
+    if (!user || user.role !== UserRole.PLAYER) {
+      removeStoredTeamSummary();
+      setTeamSummary(null);
+      return;
+    }
+
+    if (teamSummaryPromiseRef.current) {
+      await teamSummaryPromiseRef.current;
+      return;
+    }
+
+    teamSummaryPromiseRef.current = (async () => {
+      try {
+        const team = await teamsApi.getMyTeam();
+
+        if (!team?.teamName) {
+          removeStoredTeamSummary();
+          setTeamSummary(null);
+          return;
+        }
+
+        const summary: AuthTeamSummary = {
+          ownerId: user.id,
+          teamName: team.teamName,
+        };
+        setStoredTeamSummary(summary);
+        setTeamSummary(summary);
+      } catch (error) {
+        if (isUnauthorizedError(error)) {
+          clearSessionState();
+        }
+      } finally {
+        teamSummaryPromiseRef.current = null;
+      }
+    })();
+
+    await teamSummaryPromiseRef.current;
+  }, [clearSessionState, user]);
 
   useEffect(() => {
-    void bootstrapAuth();
-  }, [bootstrapAuth]);
+    isMountedRef.current = true;
+    void restoreSession();
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, [restoreSession]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
-      clearSession();
-      setUser(null);
+      clearSessionState();
+      setIsBootstrapping(false);
     };
 
     window.addEventListener("auth:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
-  }, []);
+  }, [clearSessionState]);
 
   const login = useCallback(
     async (payload: LoginRequest) => {
@@ -107,32 +228,25 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [applySession]
   );
 
-  const register = useCallback(
-    async (payload: RegisterRequest) => {
-      const session = await authApi.register(payload);
-      applySession(session);
-      return session;
-    },
-    [applySession]
-  );
+  const register = useCallback(async (payload: RegisterRequest) => {
+    await authApi.register(payload);
+  }, []);
 
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } finally {
-      clearSession();
-      setUser(null);
+      clearSessionState();
     }
-  }, []);
+  }, [clearSessionState]);
 
   const logoutAll = useCallback(async () => {
     try {
       await authApi.logoutAll();
     } finally {
-      clearSession();
-      setUser(null);
+      clearSessionState();
     }
-  }, []);
+  }, [clearSessionState]);
 
   const changePassword = useCallback(async (payload: ChangePasswordRequest) => {
     await authApi.changePassword(payload);
@@ -141,16 +255,30 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
+      teamSummary,
       isAuthenticated: Boolean(user),
-      isLoading,
+      isLoading: isBootstrapping,
+      isBootstrapping,
       login,
       register,
       logout,
       logoutAll,
-      refreshSession,
+      restoreSession,
+      refreshTeamSummary,
       changePassword,
     }),
-    [user, isLoading, login, register, logout, logoutAll, refreshSession, changePassword]
+    [
+      user,
+      teamSummary,
+      isBootstrapping,
+      login,
+      register,
+      logout,
+      logoutAll,
+      restoreSession,
+      refreshTeamSummary,
+      changePassword,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

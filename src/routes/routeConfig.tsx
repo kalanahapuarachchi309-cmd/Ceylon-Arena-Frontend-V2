@@ -40,12 +40,14 @@ const AppRoutes = () => (
 
     <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
+        <Route path={APP_ROUTES.PROFILE} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.DASHBOARD} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_TEAM} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_REGISTRATIONS} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_REGISTRATION_DETAILS} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_PAYMENTS} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.MY_PAYMENT_DETAILS} element={<UserDashboardPage />} />
+        <Route path={APP_ROUTES.SETTINGS} element={<UserDashboardPage />} />
         <Route path={APP_ROUTES.CHANGE_PASSWORD} element={<UserDashboardPage />} />
       </Route>
     </Route>

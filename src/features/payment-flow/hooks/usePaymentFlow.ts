@@ -2,24 +2,8 @@ import { useCallback, useMemo, useState, type ChangeEvent, type FormEvent } from
 
 import { useAuth } from "../../auth/hooks/useAuth";
 import { paymentsApi } from "../../payments/api/paymentsApi";
-import { registrationsApi } from "../../registrations/api/registrationsApi";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 import { defaultPaymentFormData, type PaymentFormData, type PaymentMethod, type PaymentStatus, type RegistrationNavigationState } from "../components/payment.types";
-
-const resolveId = (value: unknown): string | null => {
-  if (!value || typeof value !== "object") {
-    return null;
-  }
-
-  const record = value as Record<string, unknown>;
-  if (typeof record.id === "string") {
-    return record.id;
-  }
-  if (typeof record._id === "string") {
-    return record._id;
-  }
-  return null;
-};
 
 interface UsePaymentFlowOptions {
   registrationData: RegistrationNavigationState;
@@ -27,7 +11,7 @@ interface UsePaymentFlowOptions {
 }
 
 export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOptions) => {
-  const { register, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("method-selection");
   const [errorMessage, setErrorMessage] = useState("");
@@ -72,43 +56,11 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
     }
 
     if (!isAuthenticated) {
-      await register({
-        fullName: safeRegistrationData.playerName,
-        email: safeRegistrationData.email,
-        password: safeRegistrationData.password,
-        phone: safeRegistrationData.phone,
-        address: safeRegistrationData.leaderAddress || "N/A",
-        teamName: safeRegistrationData.teamName || "Team",
-        primaryGame: safeRegistrationData.game || "Unknown",
-        leaderInGameId: safeRegistrationData.gameId || "N/A",
-        members: [
-          {
-            name: safeRegistrationData.player2Name || "Member 1",
-            inGameId: safeRegistrationData.player2GameId || "member1",
-          },
-          {
-            name: safeRegistrationData.player3Name || "Member 2",
-            inGameId: safeRegistrationData.player3GameId || "member2",
-          },
-          {
-            name: safeRegistrationData.player4Name || "Member 3",
-            inGameId: safeRegistrationData.player4GameId || "member3",
-          },
-        ],
-      });
+      throw new Error("Please sign in and register for the event before submitting payment.");
     }
 
-    const createdRegistration = await registrationsApi.createRegistration({
-      eventId: safeRegistrationData.eventId || safeRegistrationData.game,
-    });
-
-    const registrationId = resolveId(createdRegistration);
-    if (!registrationId) {
-      throw new Error("Could not resolve registration ID from response.");
-    }
-
-    return registrationId;
-  }, [isAuthenticated, register, safeRegistrationData]);
+    throw new Error("Registration is required before payment submission.");
+  }, [isAuthenticated, safeRegistrationData.registrationId]);
 
   const completeSuccess = useCallback(() => {
     setPaymentStatus("success");
@@ -122,7 +74,8 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
       event.preventDefault();
 
       if (!formData.cardNumber || !formData.cardHolder || !formData.expiryDate || !formData.cvv) {
-        alert("Please fill all card details");
+        setPaymentStatus("error");
+        setErrorMessage("Please fill all card details.");
         return;
       }
 
@@ -137,7 +90,8 @@ export const usePaymentFlow = ({ registrationData, onSuccess }: UsePaymentFlowOp
       event.preventDefault();
 
       if (!formData.bankName || !formData.accountHolder || !formData.accountNumber || !formData.slipFile) {
-        alert("Please fill all bank details and upload payment slip");
+        setPaymentStatus("error");
+        setErrorMessage("Please fill all bank details and upload payment slip.");
         return;
       }
 

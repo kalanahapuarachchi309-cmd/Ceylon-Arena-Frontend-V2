@@ -3,16 +3,12 @@ import { useNavigate } from "react-router-dom";
 
 import AuthErrorMessage from "../../auth/components/AuthErrorMessage";
 import { useAuth } from "../../auth/hooks/useAuth";
-import GameSelectionView from "../components/GameSelectionView";
 import RegistrationFormView from "../components/RegistrationFormView";
-import { gameOptions } from "../components/gameOptions";
 import {
   defaultRegistrationFormValues,
-  type GameType,
   type RegistrationFormValues,
 } from "../components/register.types";
 import { APP_ROUTES } from "../../../shared/constants/routes";
-import { UserRole } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/Register.css";
@@ -20,16 +16,9 @@ import "../../../components/Register.css";
 const RegisterPage = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const [selectedGame, setSelectedGame] = useState<GameType>(null);
   const [formData, setFormData] = useState<RegistrationFormValues>(defaultRegistrationFormValues);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const handleGameSelect = (gameId: GameType) => {
-    setSelectedGame(gameId);
-    setFormData(defaultRegistrationFormValues);
-    setErrorMessage(null);
-  };
 
   const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -41,14 +30,7 @@ const RegisterPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!selectedGame) {
-      setErrorMessage("Please select a game first.");
-      return;
-    }
-
-    const selectedGameData = gameOptions.find((game) => game.id === selectedGame);
-    if (!selectedGameData) {
-      setErrorMessage("Selected game is invalid.");
+    if (loading) {
       return;
     }
 
@@ -56,7 +38,7 @@ const RegisterPage = () => {
     setErrorMessage(null);
 
     try {
-      const session = await register({
+      await register({
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -64,7 +46,7 @@ const RegisterPage = () => {
         address: formData.address,
         promoCode: formData.promoCode || undefined,
         teamName: formData.teamName,
-        primaryGame: selectedGameData.name,
+        primaryGame: formData.primaryGame,
         leaderInGameId: formData.leaderInGameId,
         members: [
           {
@@ -82,11 +64,14 @@ const RegisterPage = () => {
         ],
       });
 
-      if (session.user.role === UserRole.ADMIN) {
-        navigate(APP_ROUTES.ADMIN_HOME);
-      } else {
-        navigate(APP_ROUTES.DASHBOARD);
-      }
+      setFormData(defaultRegistrationFormValues);
+      navigate(APP_ROUTES.LOGIN, {
+        replace: true,
+        state: {
+          registered: true,
+          registeredEmail: formData.email,
+        },
+      });
     } catch (submitError) {
       setErrorMessage(getErrorMessage(submitError));
     } finally {
@@ -94,12 +79,10 @@ const RegisterPage = () => {
     }
   };
 
-  const handleBack = () => {
-    setSelectedGame(null);
+  const handleCancel = () => {
     setErrorMessage(null);
+    navigate(APP_ROUTES.HOME);
   };
-
-  const selectedGameData = gameOptions.find((game) => game.id === selectedGame);
 
   return (
     <div className="register-page">
@@ -109,24 +92,19 @@ const RegisterPage = () => {
         </button>
 
         <h1 className="register-title">
-          <span className="gradient-text">Game Registration</span>
+          <span className="gradient-text">Team Registration</span>
         </h1>
-        <p className="register-subtitle">Choose your game and join the competition</p>
+        <p className="register-subtitle">Create your leader account and team</p>
 
         <AuthErrorMessage message={errorMessage} />
 
-        {!selectedGame ? (
-          <GameSelectionView games={gameOptions} onSelect={handleGameSelect} />
-        ) : (
-          <RegistrationFormView
-            formData={formData}
-            selectedGameData={selectedGameData}
-            loading={loading}
-            onBack={handleBack}
-            onSubmit={handleSubmit}
-            onInputChange={handleInputChange}
-          />
-        )}
+        <RegistrationFormView
+          formData={formData}
+          loading={loading}
+          onCancel={handleCancel}
+          onSubmit={handleSubmit}
+          onInputChange={handleInputChange}
+        />
       </div>
     </div>
   );

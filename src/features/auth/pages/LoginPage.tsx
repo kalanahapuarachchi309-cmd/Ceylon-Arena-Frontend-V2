@@ -34,6 +34,14 @@ const LoginPage = () => {
       ? (location.state as { redirectTo: string }).redirectTo
       : "";
 
+  const registeredEmail =
+    typeof location.state === "object" &&
+    location.state &&
+    "registeredEmail" in location.state &&
+    typeof (location.state as { registeredEmail?: string }).registeredEmail === "string"
+      ? (location.state as { registeredEmail: string }).registeredEmail
+      : "";
+
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setFormData((prev) => ({
@@ -44,6 +52,10 @@ const LoginPage = () => {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
     setErrorMessage(null);
 
@@ -58,7 +70,7 @@ const LoginPage = () => {
       } else if (session.user.role === UserRole.ADMIN) {
         navigate(APP_ROUTES.ADMIN_HOME);
       } else {
-        navigate(APP_ROUTES.DASHBOARD);
+        navigate(APP_ROUTES.PROFILE);
       }
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
@@ -78,6 +90,9 @@ const LoginPage = () => {
           <span className="gradient-text">Player Login</span>
         </h1>
         <p className="register-subtitle">Enter your credentials to access your account</p>
+        {registeredEmail ? (
+          <p className="register-subtitle">Registration completed. Please sign in with {registeredEmail}.</p>
+        ) : null}
 
         <AuthErrorMessage message={errorMessage} />
 

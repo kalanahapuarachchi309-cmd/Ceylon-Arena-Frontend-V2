@@ -1,14 +1,9 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../auth/hooks/useAuth";
 import { usePublicEvents } from "../../events/hooks/useEvents";
-import { registrationsApi } from "../../registrations/api/registrationsApi";
-import { APP_ROUTES } from "../../../shared/constants/routes";
 import { formatDate } from "../../../shared/lib/date";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
-import { getErrorMessage } from "../../../shared/utils/errorHandler";
-import { UserRole } from "../../../shared/types";
 
 const formatDateParts = (value?: string) => {
   if (!value) {
@@ -28,44 +23,17 @@ const formatDateParts = (value?: string) => {
 
 const LiveEventsSection = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuth();
-  const { events, isLoading, error } = usePublicEvents({ page: 1, limit: 3 });
-  const [actionError, setActionError] = useState<string | null>(null);
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
-  const [pendingEventId, setPendingEventId] = useState<string | null>(null);
+  const { events, isLoading, error } = usePublicEvents({ page: 1, limit: 100 });
 
-  const visibleEvents = useMemo(() => events.slice(0, 3), [events]);
+  const visibleEvents = useMemo(() => events, [events]);
 
-  const handleEventOpen = (slug?: string) => {
+  const handleEventOpen = (slug?: string, eventId?: string | null) => {
     if (!slug) {
       return;
     }
-    navigate(`/events/${slug}`);
-  };
-
-  const handleRegister = async (eventId: string, slug?: string) => {
-    setActionError(null);
-    setActionSuccess(null);
-
-    if (!isAuthenticated || !user) {
-      navigate(APP_ROUTES.LOGIN, { state: { redirectTo: slug ? `/events/${slug}` : APP_ROUTES.EVENTS } });
-      return;
-    }
-
-    if (user.role !== UserRole.PLAYER) {
-      setActionError("Only players can register for events.");
-      return;
-    }
-
-    setPendingEventId(eventId);
-    try {
-      await registrationsApi.createRegistration({ eventId });
-      setActionSuccess("Registration created. You can manage it from My Registrations.");
-    } catch (registerError) {
-      setActionError(getErrorMessage(registerError));
-    } finally {
-      setPendingEventId(null);
-    }
+    navigate(`/events/${slug}`, {
+      state: eventId ? { eventId } : undefined,
+    });
   };
 
   return (
@@ -80,8 +48,6 @@ const LiveEventsSection = () => {
           <p className="section-subtitle">Hurry up! For the Enrollments - Be there! To win.</p>
         </div>
 
-        {actionError ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{actionError}</p> : null}
-        {actionSuccess ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{actionSuccess}</p> : null}
         {error ? <p className="section-subtitle" style={{ marginBottom: "1rem" }}>{error}</p> : null}
 
         <div className="events-container">
@@ -122,10 +88,10 @@ const LiveEventsSection = () => {
                   </div>
                   <button
                     className="btn btn-primary"
-                    onClick={() => eventId && handleRegister(eventId, event.slug)}
-                    disabled={!eventId || pendingEventId === eventId}
+                    onClick={() => handleEventOpen(event.slug, eventId)}
+                    disabled={!event.slug}
                   >
-                    {pendingEventId === eventId ? "Registering..." : "Register"}
+                    View & Register
                   </button>
                 </div>
               );
