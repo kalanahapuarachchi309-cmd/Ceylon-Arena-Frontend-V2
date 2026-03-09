@@ -217,88 +217,139 @@ const EventRegistrationPaymentPage = () => {
           {errorMessage ? <p className="register-subtitle">{errorMessage}</p> : null}
 
           {!isLoading && event ? (
-            <div className="registration-form-container">
-              <form className="registration-form" onSubmit={handleSubmitPayment}>
-                <CustomFormSection title="Registration Overview">
-                  <div className="form-group">
-                    <label>Event</label>
-                    <input value={event.title} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Game</label>
-                    <input value={event.gameName} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Entry Fee</label>
-                    <input value={`${event.currency} ${event.entryFee}`} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Event Start</label>
-                    <input value={formatDateTime(event.eventStartAt)} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Registration ID</label>
-                    <input value={registrationId || "Not found"} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Registration Status</label>
-                    <input value={registrationStatus} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Team</label>
-                    <input value={team?.teamName || "-"} readOnly />
-                  </div>
-                  <div className="form-group">
-                    <label>Leader Email</label>
-                    <input value={user?.email || "-"} readOnly />
-                  </div>
-                </CustomFormSection>
+            <div className="registration-form-container payment-page-container">
+              <form className="payment-layout-form" onSubmit={handleSubmitPayment}>
+                <div className="payment-layout">
+                  {/* Left Side */}
+                  <div className="payment-side-card payment-layout-left">
+                    <CustomFormSection title="Registration Overview">
+                      <div className="form-group">
+                        <label>Event</label>
+                        <input value={event.title} readOnly />
+                      </div>
 
-                <CustomFormSection title="Bank Transfer Details">
-                  <div className="form-group">
-                    <label htmlFor="transactionReference">Transaction Reference *</label>
-                    <input
-                      id="transactionReference"
-                      name="transactionReference"
-                      value={paymentForm.transactionReference}
-                      onChange={handleFieldChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="bankName">Bank Name *</label>
-                    <input
-                      id="bankName"
-                      name="bankName"
-                      value={paymentForm.bankName}
-                      onChange={handleFieldChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="accountHolder">Account Holder *</label>
-                    <input
-                      id="accountHolder"
-                      name="accountHolder"
-                      value={paymentForm.accountHolder}
-                      onChange={handleFieldChange}
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="slip">Upload Bank Slip *</label>
-                    <input
-                      id="slip"
-                      name="slip"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFieldChange}
-                      required
-                    />
-                  </div>
-                </CustomFormSection>
+                      <div className="form-group">
+                        <label>Game</label>
+                        <input value={event.gameName} readOnly />
+                      </div>
 
-                <div className="form-actions">
+                      <div className="form-group">
+                        <label>Entry Fee</label>
+                        <input value={`${event.currency} ${Number(event.entryFee).toLocaleString()}`} readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Event Start</label>
+                        <input value={formatDateTime(event.eventStartAt)} readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Registration ID</label>
+                        <input value={registrationId || "Not found"} readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Registration Status</label>
+                        <input value={registrationStatus} readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Team</label>
+                        <input value={team?.teamName || "-"} readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Leader Email</label>
+                        <input value={user?.email || "-"} readOnly />
+                      </div>
+                    </CustomFormSection>
+                  </div>
+
+                  {/* Right Side */}
+                  <div className="payment-side-card payment-layout-right">
+                    <CustomFormSection title="Account Details">
+                      <div className="form-group">
+                        <label>Amount to Transfer</label>
+                        <input
+                          value={`${event.currency} ${Number(event.entryFee).toLocaleString()}`}
+                          readOnly
+                          className="payment-highlight-input"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Account Name</label>
+                        <input value="Symphony Event LK" readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Account Number</label>
+                        <input value="8023860717" readOnly />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Bank Name</label>
+                        <input value="Commercial Bank Anuradhapura" readOnly />
+                      </div>
+
+                      <div className="payment-note-box">
+                        <p>
+                          ⚠️ <strong>Important:</strong> Please transfer the exact amount to the above
+                          account and upload your bank slip below to complete your registration.
+                        </p>
+                      </div>
+                    </CustomFormSection>
+
+                    <CustomFormSection title="Bank Transfer Details">
+                      <div className="form-group">
+                        <label htmlFor="transactionReference">Transaction Reference *</label>
+                        <input
+                          id="transactionReference"
+                          name="transactionReference"
+                          value={paymentForm.transactionReference}
+                          onChange={handleFieldChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="bankName">Your Bank Name *</label>
+                        <input
+                          id="bankName"
+                          name="bankName"
+                          value={paymentForm.bankName}
+                          onChange={handleFieldChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="accountHolder">Account Holder Name *</label>
+                        <input
+                          id="accountHolder"
+                          name="accountHolder"
+                          value={paymentForm.accountHolder}
+                          onChange={handleFieldChange}
+                          required
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label htmlFor="slip">Upload Bank Slip *</label>
+                        <input
+                          id="slip"
+                          name="slip"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFieldChange}
+                          required
+                        />
+                      </div>
+                    </CustomFormSection>
+                  </div>
+                </div>
+
+                <div className="form-actions payment-form-actions">
                   <ButtonLoadingState
                     type="submit"
                     className="btn btn-submit"
@@ -308,6 +359,7 @@ const EventRegistrationPaymentPage = () => {
                   >
                     Submit Payment
                   </ButtonLoadingState>
+
                   <button
                     type="button"
                     className="btn btn-cancel"

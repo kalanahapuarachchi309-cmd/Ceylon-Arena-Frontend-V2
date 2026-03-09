@@ -1552,8 +1552,8 @@ body {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 200%;
-  height: 200%;
+  width: 100vw;
+  height: 100vw;
   border: none;
   z-index: 0;
   pointer-events: none;
@@ -1600,8 +1600,8 @@ body {
 
 .stat-item {
   flex: 1 1 200px;
-  min-width: 170px;
-  max-width: 240px;
+  min-width: 250px;
+  max-width: 260px;
   background: rgba(255,255,255,0.08);
   backdrop-filter: blur(10px) saturate(1.2);
   border: 2px solid rgba(0,255,255,0.2);

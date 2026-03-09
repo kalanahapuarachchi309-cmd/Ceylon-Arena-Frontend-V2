@@ -8,6 +8,7 @@ import { useMyTeam } from "../../teams/hooks/useTeams";
 import {
   APP_ROUTES,
   toEventRoute,
+  toEventRegistrationPaymentRoute,
 } from "../../../shared/constants/routes";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
 import { formatDateTime } from "../../../shared/lib/date";
@@ -116,8 +117,12 @@ const UserDashboardPage = () => {
   const paymentByRegistrationId = useMemo(() => {
     const map = new Map<string, (typeof payments)[number]>();
     payments.forEach((paymentItem) => {
+      // Handle both string registrationId and nested object with _id
+      const registrationIdValue = (paymentItem as any).registrationId;
       const targetRegistrationId =
-        paymentItem.registrationId || resolveEntityId(paymentItem.registration);
+        typeof registrationIdValue === 'string'
+          ? registrationIdValue
+          : registrationIdValue?._id || resolveEntityId(paymentItem.registration);
       if (targetRegistrationId && !map.has(targetRegistrationId)) {
         map.set(targetRegistrationId, paymentItem);
       }
@@ -193,10 +198,14 @@ const UserDashboardPage = () => {
       ? paymentByRegistrationId.get(registrationEntityId)
       : undefined;
 
+    // Support both 'event' and 'eventId' field names for populated event data
+    const eventData = (registration as any).event || (registration as any).eventId;
+
     return {
       key: registrationEntityId || registration.eventId || registration.createdAt || Math.random().toString(),
-      eventTitle: registration.event?.title || "Event",
-      eventSlug: registration.event?.slug || "",
+      registrationId: registrationEntityId ?? undefined,
+      eventTitle: eventData?.title || "Event",
+      eventSlug: eventData?.slug || "",
       registrationStatus: registration.status,
       registrationNotes: registration.notes || "-",
       registrationUpdatedAt: formatDateTime(registration.updatedAt || registration.createdAt),
@@ -207,6 +216,27 @@ const UserDashboardPage = () => {
       paymentAdminNote: linkedPayment?.adminNote || "-",
     };
   });
+
+  const handleContinuePayment = (registrationId: string | undefined, eventSlug: string) => {
+    if (!registrationId || !eventSlug) {
+      toast.error("Unable to continue payment. Registration information is missing.");
+      return;
+    }
+
+    const paymentRoute = `${toEventRegistrationPaymentRoute(eventSlug)}?registrationId=${registrationId}`;
+    navigate(paymentRoute, {
+      state: {
+        registrationId,
+        playerName: user?.fullName || user?.playerName || "",
+        email: user?.email || "",
+        phone: user?.phone || "",
+        teamName: team?.teamName || "",
+        game: team?.primaryGame || "",
+        leaderAddress: user?.address || "",
+        gameId: team?.leaderInGameId || "",
+      },
+    });
+  };
 
   return (
     <div className="user-dashboard">
@@ -411,15 +441,26 @@ const UserDashboardPage = () => {
                             <strong>{card.paymentAdminNote}</strong>
                           </div>
                         </div>
-                        {card.eventSlug ? (
-                          <button
-                            type="button"
-                            className="action-btn view-stats"
-                            onClick={() => navigate(toEventRoute(card.eventSlug))}
-                          >
-                            View Event
-                          </button>
-                        ) : null}
+                        <div className="registered-event-actions">
+                          {(card.paymentStatus === "PENDING" || card.paymentStatus === "NOT_SUBMITTED") && card.eventSlug ? (
+                            <button
+                              type="button"
+                              className="action-btn play-btn"
+                              onClick={() => handleContinuePayment(card.registrationId, card.eventSlug)}
+                            >
+                              Continue Payment
+                            </button>
+                          ) : null}
+                          {card.eventSlug ? (
+                            <button
+                              type="button"
+                              className="action-btn view-stats"
+                              onClick={() => navigate(toEventRoute(card.eventSlug))}
+                            >
+                              View Event
+                            </button>
+                          ) : null}
+                        </div>
                       </article>
                     ))}
                   </div>
