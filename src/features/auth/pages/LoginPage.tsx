@@ -81,8 +81,8 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="register-page">
-      <div className="register-container">
+    <div className="register-page login-page">
+      <div className="register-container login-container">
         <button className="btn-home-nav" onClick={() => navigate(APP_ROUTES.HOME)}>
           Back to Home
         </button>

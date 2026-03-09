@@ -28,6 +28,11 @@
   z-index: 1;
 }
 
+/* Narrower container for login page */
+.login-container {
+  max-width: 800px;
+}
+
 .btn-home-nav {
   position: absolute;
   top: -20px;
@@ -657,6 +662,51 @@
   color: #666;
 }
 
+/* Password Input with Toggle Button */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 45px !important;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  bottom: 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  z-index: 10;
+  border-radius: 0 6px 6px 0;
+}
+
+.password-toggle-btn:hover {
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  color: #00ffff;
+  background: rgba(0, 255, 255, 0.15);
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 .form-inline-error {
   margin-top: 8px;
   color: #ff6b9f;
@@ -820,6 +870,12 @@
 
   .payment-layout {
     grid-template-columns: 1fr;
+  }
+
+  /* Responsive login container */
+  .login-container {
+    max-width: 100%;
+    padding: 0 10px;
   }
 
 }
