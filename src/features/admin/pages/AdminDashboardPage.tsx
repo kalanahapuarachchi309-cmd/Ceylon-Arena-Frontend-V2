@@ -43,11 +43,6 @@ interface EventFormState {
   status: EventEntity["status"];
 }
 
-interface RegistrationReviewState {
-  status: RegistrationEntity["status"];
-  notes: string;
-}
-
 interface PaymentReviewState {
   status: Exclude<PaymentEntity["status"], "PENDING">;
   adminNote: string;
@@ -109,13 +104,8 @@ const AdminDashboardPage = () => {
   const [payments, setPayments] = useState<PaymentEntity[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserEntity | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<TeamEntity | null>(null);
-  const [selectedRegistration, setSelectedRegistration] = useState<RegistrationEntity | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentEntity | null>(null);
   const [eventForm, setEventForm] = useState<EventFormState>(emptyEventForm);
-  const [registrationReview, setRegistrationReview] = useState<RegistrationReviewState>({
-    status: "PENDING_PAYMENT",
-    notes: "",
-  });
   const [paymentReview, setPaymentReview] = useState<PaymentReviewState>({
     status: "APPROVED",
     adminNote: "",
@@ -123,6 +113,13 @@ const AdminDashboardPage = () => {
   const [confirmAction, setConfirmAction] = useState<ConfirmActionState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [slipViewerUrl, setSlipViewerUrl] = useState<string | null>(null);
+  const [reviewModal, setReviewModal] = useState<{
+    paymentId: string;
+    registrationId: string | undefined;
+    paymentData: any;
+  } | null>(null);
+  const [selectedEventFilter, setSelectedEventFilter] = useState<string>("all");
 
   const tab = useMemo(() => {
     if (userDetailMatch?.params.id || legacyUserDetailMatch?.params.id) return "user-detail";
@@ -140,17 +137,6 @@ const AdminDashboardPage = () => {
     teamDetailMatch?.params.id,
     userDetailMatch?.params.id,
   ]);
-
-  const paymentsByRegistrationId = useMemo(() => {
-    const map = new Map<string, PaymentEntity>();
-    payments.forEach((paymentItem) => {
-      const key = paymentItem.registrationId || resolveEntityId(paymentItem.registration);
-      if (key && !map.has(key)) {
-        map.set(key, paymentItem);
-      }
-    });
-    return map;
-  }, [payments]);
 
   const loadUsers = async () => setUsers(await usersApi.getUsers({ page: 1, limit: 50 }));
   const loadTeams = async () => setTeams(await teamsApi.getTeams({ page: 1, limit: 50 }));
@@ -171,7 +157,7 @@ const AdminDashboardPage = () => {
         } else if (tab === "events") {
           await loadEvents();
         } else if (tab === "registrations") {
-          await Promise.all([loadRegistrations(), loadPayments()]);
+          await Promise.all([loadEvents(), loadRegistrations(), loadPayments()]);
         } else if (tab === "payments") {
           await loadPayments();
         }
@@ -212,9 +198,6 @@ const AdminDashboardPage = () => {
   ]);
 
   useEffect(() => {
-    if (tab !== "registrations") {
-      setSelectedRegistration(null);
-    }
     if (tab !== "payments") {
       setSelectedPayment(null);
     }
@@ -302,57 +285,6 @@ const AdminDashboardPage = () => {
     }
   };
 
-  const handleOpenRegistration = async (id: string) => {
-    try {
-      setError(null);
-      const detail = await registrationsApi.getRegistrationById(id);
-      setSelectedRegistration(detail);
-      setRegistrationReview({
-        status: detail.status,
-        notes: detail.notes || "",
-      });
-    } catch (actionError) {
-      const message = getErrorMessage(actionError);
-      setError(message);
-      toast.error(message);
-    }
-  };
-
-  const handleRegistrationReviewChange = (
-    event: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = event.target;
-    setRegistrationReview((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleRegistrationReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const registrationEntityId = resolveEntityId(selectedRegistration);
-    if (!registrationEntityId) {
-      setError("Registration id is missing.");
-      toast.error("Registration id is missing.");
-      return;
-    }
-
-    try {
-      await registrationsApi.updateRegistrationStatus(registrationEntityId, {
-        status: registrationReview.status,
-        notes: registrationReview.notes || undefined,
-      });
-      setMessage("Registration status updated.");
-      toast.success("Registration status updated.");
-      await Promise.all([loadRegistrations(), loadPayments()]);
-      await handleOpenRegistration(registrationEntityId);
-    } catch (actionError) {
-      const message = getErrorMessage(actionError);
-      setError(message);
-      toast.error(message);
-    }
-  };
-
   const handleOpenPayment = async (id: string) => {
     try {
       setError(null);
@@ -402,13 +334,43 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleQuickPaymentAction = async (paymentId: string, registrationId: string | undefined, action: "APPROVED" | "REJECTED") => {
+    if (!paymentId) {
+      toast.error("Payment ID is missing.");
+      return;
+    }
+
+    try {
+      // Update payment status
+      await paymentsApi.reviewPayment(paymentId, {
+        status: action,
+        adminNote: action === "APPROVED" ? "Payment approved by admin" : "Payment rejected by admin",
+      });
+
+      // Update registration status if registration ID exists
+      if (registrationId) {
+        await registrationsApi.updateRegistrationStatus(registrationId, {
+          status: action === "APPROVED" ? "CONFIRMED" : "REJECTED",
+          notes: action === "APPROVED" ? "Payment approved, registration confirmed" : "Payment rejected",
+        });
+      }
+
+      toast.success(`Payment ${action === "APPROVED" ? "approved" : "rejected"} successfully!`);
+      await Promise.all([loadPayments(), loadRegistrations()]);
+      setReviewModal(null);
+    } catch (actionError) {
+      const message = getErrorMessage(actionError);
+      setError(message);
+      toast.error(message);
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <div className="admin-header">
         <button className="btn-back-to-home" onClick={() => navigate(APP_ROUTES.HOME)}>Back to Home</button>
         <div className="admin-title-section">
           <h1 className="admin-title">ADMIN CONTROL CENTER</h1>
-          <p className="admin-welcome">Welcome, {user?.fullName || user?.playerName || "Admin"}</p>
         </div>
         <button className="btn-back-to-home" onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}>Logout</button>
       </div>
@@ -419,7 +381,6 @@ const AdminDashboardPage = () => {
         <button className={`nav-btn ${tab.startsWith("team") ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_TEAMS)}>Teams</button>
         <button className={`nav-btn ${tab === "events" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_EVENTS)}>Events</button>
         <button className={`nav-btn ${tab === "registrations" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_REGISTRATIONS)}>Registrations</button>
-        <button className={`nav-btn ${tab === "payments" ? "active" : ""}`} onClick={() => navigate(APP_ROUTES.ADMIN_PAYMENTS)}>Payments</button>
       </div>
 
       <div className="admin-content">
@@ -505,43 +466,134 @@ const AdminDashboardPage = () => {
 
         {tab === "registrations" && (
           <>
+            <div className="filter-section" style={{ marginBottom: '25px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+              <label style={{ color: '#00ffff', fontWeight: '600', fontSize: '0.95rem' }}>Filter by Event:</label>
+              <select 
+                value={selectedEventFilter} 
+                onChange={(e) => setSelectedEventFilter(e.target.value)}
+                className="filter-select"
+                style={{ 
+                  padding: '10px 15px',
+                  background: 'linear-gradient(135deg, rgba(26, 31, 58, 0.9), rgba(45, 53, 97, 0.7))',
+                  border: '2px solid rgba(0, 255, 255, 0.3)',
+                  borderRadius: '8px',
+                  color: '#f0f0f0',
+                  fontSize: '0.95rem',
+                  minWidth: '250px',
+                  cursor: 'pointer'
+                }}
+              >
+                <option value="all" style={{ backgroundColor: '#1a1f3a', color: '#f0f0f0', padding: '8px' }}>All Events</option>
+                {events.map((event) => {
+                  const eventId = resolveEntityId(event);
+                  return <option key={eventId || event.slug} value={eventId || event.slug} style={{ backgroundColor: '#1a1f3a', color: '#f0f0f0', padding: '8px' }}>{event.title}</option>;
+                })}
+              </select>
+            </div>
             <table className="admin-table">
-              <thead><tr><th>Event</th><th>Team</th><th>Status</th><th>Payment</th><th>Updated</th><th>Action</th></tr></thead>
-              <tbody>{registrations.map((item) => {
+              <thead><tr><th>Event</th><th>Team / Leader</th><th>Amount / Method</th><th>Payment Status</th><th>Reg Status</th><th>Transaction / Bank</th><th>Action</th></tr></thead>
+              <tbody>{payments.filter((item) => {
+                if (selectedEventFilter === 'all') return true;
+                const paymentData = item as any;
+                const eventId = typeof paymentData.eventId === 'object' && paymentData.eventId !== null
+                  ? resolveEntityId(paymentData.eventId)
+                  : String(paymentData.eventId);
+                return eventId === selectedEventFilter;
+              }).map((item) => {
                 const id = resolveEntityId(item);
-                const linkedPayment = id ? paymentsByRegistrationId.get(id) : undefined;
-                const paymentEntityId = resolveEntityId(linkedPayment);
+                const paymentData = item as any; // Cast to any to access backend populated fields
+                const registrationId = typeof paymentData.registrationId === 'object' && paymentData.registrationId !== null 
+                  ? resolveEntityId(paymentData.registrationId) 
+                  : item.registrationId;
+                
+                // Safely extract event title
+                const eventTitle = typeof paymentData.eventId === 'object' && paymentData.eventId !== null 
+                  ? paymentData.eventId.title || 'Unknown Event'
+                  : String(paymentData.eventId || 'Unknown Event');
+                
+                // Safely extract team name
+                const teamName = typeof paymentData.teamId === 'object' && paymentData.teamId !== null 
+                  ? paymentData.teamId.teamName || 'Unknown Team'
+                  : String(paymentData.teamId || 'Unknown Team');
+                
+                // Safely extract leader name
+                const leaderName = typeof paymentData.leaderId === 'object' && paymentData.leaderId !== null 
+                  ? paymentData.leaderId.fullName || paymentData.leaderId.playerName || 'Unknown Leader'
+                  : String(paymentData.leaderId || 'Unknown Leader');
+                
+                // Safely extract registration status
+                const registrationStatus = typeof paymentData.registrationId === 'object' && paymentData.registrationId !== null
+                  ? paymentData.registrationId.status || '-'
+                  : '-';
+                
+                // Determine color for registration status
+                const getRegStatusColor = (status: string) => {
+                  switch (status) {
+                    case 'CONFIRMED':
+                      return '#00ff88';
+                    case 'REJECTED':
+                      return '#ff6b6b';
+                    case 'PENDING_PAYMENT':
+                      return '#ffa502';
+                    case 'CANCELLED':
+                      return '#95a5a6';
+                    default:
+                      return '#e0e0e0';
+                  }
+                };
+                
+                // Determine color for payment status
+                const getPaymentStatusColor = (status: string) => {
+                  switch (status) {
+                    case 'APPROVED':
+                    case 'VERIFIED':
+                      return '#00ff88';
+                    case 'REJECTED':
+                      return '#ff6b6b';
+                    case 'PENDING':
+                      return '#ffa502';
+                    default:
+                      return '#e0e0e0';
+                  }
+                };
+                
                 return (
-                  <tr key={id || item.eventId}>
-                    <td>{item.event?.title || item.eventId}</td>
-                    <td>{item.team?.teamName || item.teamId}</td>
-                    <td>{item.status}</td>
-                    <td>{linkedPayment ? `${linkedPayment.status} (${linkedPayment.transactionReference || "-"})` : "NOT_SUBMITTED"}</td>
-                    <td>{formatDateTime(item.updatedAt || item.createdAt)}</td>
+                  <tr key={id || String(item.registrationId)}>
                     <td>
-                      <button className="action-btn" disabled={!id} onClick={() => id && void handleOpenRegistration(id)}>View</button>
-                      <button className="action-btn" disabled={!paymentEntityId} onClick={() => paymentEntityId && void handleOpenPayment(paymentEntityId)}>
-                        Payment
-                      </button>
+                      <div>{String(eventTitle)}</div>
+                      <div style={{ fontSize: '0.75em', color: '#888', marginTop: '4px' }}>{formatDateTime(item.updatedAt || item.createdAt)}</div>
+                    </td>
+                    <td>
+                      <div>{String(teamName)}</div>
+                      <div style={{ fontSize: '0.8em', color: '#a0a0a0', marginTop: '4px' }}>{String(leaderName)}</div>
+                    </td>
+                    <td>
+                      <div>Rs {item.amount || 0}</div>
+                      <div style={{ fontSize: '0.8em', color: '#a0a0a0', marginTop: '4px' }}>{paymentData.paymentMethod || item.method || '-'}</div>
+                    </td>
+                    <td style={{ color: getPaymentStatusColor(item.status), fontWeight: 'bold' }}>{item.status}</td>
+                    <td style={{ color: getRegStatusColor(String(registrationStatus)), fontWeight: 'bold' }}>{String(registrationStatus)}</td>
+                    <td>
+                      <div>{item.transactionReference || '-'}</div>
+                      <div style={{ fontSize: '0.8em', color: '#a0a0a0', marginTop: '4px' }}>{item.bankName || '-'}</div>
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        <button className="action-btn" disabled={!item.slipUrl && !item.slipFilePath} onClick={() => setSlipViewerUrl(item.slipUrl || item.slipFilePath || null)}>Slip</button>
+                        <button 
+                          className="action-btn" 
+                          style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff' }}
+                          disabled={!id || item.status === 'APPROVED' || item.status === 'REJECTED'} 
+                          onClick={() => id && setReviewModal({ paymentId: id, registrationId: registrationId || undefined, paymentData })}
+                        >
+                          Review
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
               })}</tbody>
             </table>
-
-            {selectedRegistration ? (
-              <form className="registration-form" onSubmit={handleRegistrationReviewSubmit}>
-                <div className="form-section">
-                  <h3 className="form-section-title">Registration Detail</h3>
-                  <div className="form-group"><label>Registration ID</label><input value={resolveEntityId(selectedRegistration) || "-"} readOnly /></div>
-                  <div className="form-group"><label>Event</label><input value={selectedRegistration.event?.title || selectedRegistration.eventId} readOnly /></div>
-                  <div className="form-group"><label>Team</label><input value={selectedRegistration.team?.teamName || selectedRegistration.teamId} readOnly /></div>
-                  <div className="form-group"><label>Status</label><select name="status" value={registrationReview.status} onChange={handleRegistrationReviewChange}><option>PENDING_PAYMENT</option><option>PAYMENT_SUBMITTED</option><option>CONFIRMED</option><option>REJECTED</option><option>CANCELLED</option></select></div>
-                  <div className="form-group"><label>Notes</label><input name="notes" value={registrationReview.notes} onChange={handleRegistrationReviewChange} placeholder="Add admin notes" /></div>
-                </div>
-                <div className="form-actions"><button className="btn btn-submit" type="submit">Update Registration</button></div>
-              </form>
-            ) : null}
           </>
         )}
 
@@ -598,6 +650,87 @@ const AdminDashboardPage = () => {
         onConfirm={() => void executeConfirmAction()}
         onCancel={() => setConfirmAction(null)}
       />
+
+      {slipViewerUrl && (
+        <div className="payment-modal-overlay" onClick={() => setSlipViewerUrl(null)}>
+          <div className="payment-modal slip-viewer-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setSlipViewerUrl(null)}>✕</button>
+            <h3 className="form-section-title">Payment Slip</h3>
+            <div className="slip-viewer-container">
+              {slipViewerUrl.toLowerCase().endsWith('.pdf') ? (
+                <iframe
+                  src={slipViewerUrl}
+                  title="Payment Slip PDF"
+                  className="slip-pdf-viewer"
+                />
+              ) : (
+                <img
+                  src={slipViewerUrl}
+                  alt="Payment Slip"
+                  className="slip-image-viewer"
+                />
+              )}
+            </div>
+            <div className="form-actions">
+              <a href={slipViewerUrl} target="_blank" rel="noopener noreferrer" className="btn btn-submit">
+                Open in New Tab
+              </a>
+              <button className="btn btn-cancel" onClick={() => setSlipViewerUrl(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reviewModal && (
+        <div className="payment-modal-overlay" onClick={() => setReviewModal(null)}>
+          <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-btn" onClick={() => setReviewModal(null)}>✕</button>
+            <h3 className="form-section-title">Review Payment</h3>
+            <div className="review-payment-details">
+              <div className="review-detail-row">
+                <span className="review-label">Event:</span>
+                <span className="review-value">{reviewModal.paymentData?.eventId?.title || 'N/A'}</span>
+              </div>
+              <div className="review-detail-row">
+                <span className="review-label">Team:</span>
+                <span className="review-value">{reviewModal.paymentData?.teamId?.teamName || 'N/A'}</span>
+              </div>
+              <div className="review-detail-row">
+                <span className="review-label">Leader:</span>
+                <span className="review-value">{reviewModal.paymentData?.leaderId?.fullName || 'N/A'}</span>
+              </div>
+              <div className="review-detail-row">
+                <span className="review-label">Amount:</span>
+                <span className="review-value">Rs. {reviewModal.paymentData?.amount || '0'}</span>
+              </div>
+              <div className="review-detail-row">
+                <span className="review-label">Payment Method:</span>
+                <span className="review-value">{reviewModal.paymentData?.paymentMethod || 'N/A'}</span>
+              </div>
+              <div className="review-detail-row">
+                <span className="review-label">Current Status:</span>
+                <span className="review-value" style={{ fontWeight: 'bold', textTransform: 'uppercase' }}>{reviewModal.paymentData?.status || 'N/A'}</span>
+              </div>
+            </div>
+            <div className="form-actions" style={{ marginTop: '30px', gap: '15px' }}>
+              <button 
+                className="btn btn-submit" 
+                style={{ background: 'linear-gradient(135deg, #00b894, #00ffff)', flex: 1 }}
+                onClick={() => handleQuickPaymentAction(reviewModal.paymentId, reviewModal.registrationId, 'APPROVED')}
+              >
+                ✓ Approve Payment & Confirm Registration
+              </button>
+              <button 
+                className="btn btn-delete" 
+                style={{ background: 'linear-gradient(135deg, #ff6b6b, #ff3b3b)', flex: 1 }}
+                onClick={() => handleQuickPaymentAction(reviewModal.paymentId, reviewModal.registrationId, 'REJECTED')}
+              >
+                ✗ Reject Payment & Registration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
