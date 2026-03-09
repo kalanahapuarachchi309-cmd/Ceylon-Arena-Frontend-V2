@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 import BankPaymentForm from "../components/BankPaymentForm";
@@ -9,14 +10,29 @@ import PaymentProcessingView from "../components/PaymentProcessingView";
 import PaymentSuccessView from "../components/PaymentSuccessView";
 import type { RegistrationNavigationState } from "../components/payment.types";
 import { usePaymentFlow } from "../hooks/usePaymentFlow";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 
 import "../../../components/Payment.css";
 
 const PaymentPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
 
   const navigationState = (location.state ?? {}) as Partial<RegistrationNavigationState>;
+  const missingRegistrationData = !navigationState.playerName || !navigationState.email;
+
+  useEffect(() => {
+    if (!missingRegistrationData) {
+      return;
+    }
+
+    toast.error({
+      title: "Registration Data Missing",
+      message: "Please complete registration before payment.",
+      dedupeKey: "payment-page-missing-registration-data",
+    });
+  }, [missingRegistrationData, toast]);
 
   const {
     paymentMethod,
@@ -53,7 +69,7 @@ const PaymentPage = () => {
     onSuccess: () => navigate("/"),
   });
 
-  if (!navigationState.playerName || !navigationState.email) {
+  if (missingRegistrationData) {
     return (
       <div className="payment-page">
         <div className="payment-container">

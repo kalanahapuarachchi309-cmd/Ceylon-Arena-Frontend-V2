@@ -7,7 +7,7 @@ import axios, {
 
 import { env } from "../../config/env";
 import { clearAuthStorage, getAccessToken, setAccessToken } from "../lib/storage";
-import { toast } from "../utils/toast";
+import { toast } from "../toast";
 
 interface RetryRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;

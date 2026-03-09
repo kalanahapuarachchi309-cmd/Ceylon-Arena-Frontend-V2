@@ -41,7 +41,13 @@ const EventRegistrationConfirmPage = () => {
   useEffect(() => {
     const loadPageData = async () => {
       if (!slug) {
-        setErrorMessage("Event slug is missing.");
+        const message = "Event slug is missing.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Registration Setup Failed",
+          message,
+          dedupeKey: "event-registration-confirm-missing-slug",
+        });
         setIsLoading(false);
         return;
       }
@@ -57,14 +63,20 @@ const EventRegistrationConfirmPage = () => {
         setEvent(eventResponse);
         setTeam(teamResponse);
       } catch {
-        setErrorMessage("Unable to load event confirmation details.");
+        const message = "Unable to load event confirmation details.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Load Failed",
+          message,
+          dedupeKey: "event-registration-confirm-load-failed",
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadPageData();
-  }, [slug]);
+  }, [slug, toast]);
 
   const eventId = useMemo(() => resolveEntityId(event), [event]);
 
@@ -103,12 +115,23 @@ const EventRegistrationConfirmPage = () => {
 
   const handleProceedToPayment = async () => {
     if (!eventId) {
-      setErrorMessage("Event id is missing.");
+      const message = "Event id is missing.";
+      setErrorMessage(message);
+      toast.error({
+        title: "Registration Failed",
+        message,
+      });
       return;
     }
 
     if (!team) {
-      setErrorMessage("Team information is missing. Please update your profile first.");
+      const message = "Team information is missing. Please update your profile first.";
+      setErrorMessage(message);
+      toast.warning({
+        title: "Team Required",
+        message,
+        dedupeKey: "event-registration-confirm-team-missing",
+      });
       return;
     }
 
@@ -127,19 +150,35 @@ const EventRegistrationConfirmPage = () => {
 
       if (!isAlreadyRegistered) {
         setErrorMessage(normalizedError.message);
+        toast.error({
+          title: "Registration Failed",
+          message: normalizedError.message,
+        });
         return;
       }
 
       try {
         const existingRegistration = await findExistingRegistration(eventId);
         if (!existingRegistration) {
-          setErrorMessage("Registration already exists, but could not be retrieved.");
+          const message = "Registration already exists, but could not be retrieved.";
+          setErrorMessage(message);
+          toast.error({
+            title: "Registration Lookup Failed",
+            message,
+            dedupeKey: "event-registration-existing-not-found",
+          });
           return;
         }
         toast.info("Existing registration found. Continue with payment.");
         navigateToPayment(existingRegistration);
       } catch {
-        setErrorMessage("Unable to resolve existing registration.");
+        const message = "Unable to resolve existing registration.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Registration Lookup Failed",
+          message,
+          dedupeKey: "event-registration-existing-resolve-failed",
+        });
       }
     } finally {
       setIsSubmitting(false);

@@ -28,6 +28,11 @@
   z-index: 1;
 }
 
+/* Login form specific width */
+.register-container:has(.registration-form) {
+  max-width: 800px;
+}
+
 .btn-home-nav {
   position: absolute;
   top: -20px;
@@ -81,6 +86,7 @@
   margin-bottom: 60px;
   text-transform: uppercase;
   letter-spacing: 2px;
+  padding-bottom: 30px;
 }
 
 /* Game Selection View */
@@ -655,6 +661,42 @@
 
 .form-group input::placeholder {
   color: #666;
+}
+
+/* Password input with toggle */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 50px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: transparent;
+  border: none;
+  color: #00ffff;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  opacity: 0.7;
+}
+
+.password-toggle-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.password-toggle-btn:focus {
+  outline: none;
+  opacity: 1;
 }
 
 .form-inline-error {

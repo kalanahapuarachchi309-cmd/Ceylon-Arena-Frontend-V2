@@ -30,7 +30,13 @@ const PublicEventDetailPage = () => {
   useEffect(() => {
     const loadEvent = async () => {
       if (!slug) {
-        setErrorMessage("Event slug is missing.");
+        const message = "Event slug is missing.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Event Load Failed",
+          message,
+          dedupeKey: "public-event-missing-slug",
+        });
         setIsLoading(false);
         return;
       }
@@ -41,14 +47,20 @@ const PublicEventDetailPage = () => {
         const response = await eventsApi.getPublicEventBySlug(slug);
         setEvent(response);
       } catch {
-        setErrorMessage("Unable to load event details.");
+        const message = "Unable to load event details.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Event Load Failed",
+          message,
+          dedupeKey: `public-event-load-failed:${slug}`,
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
     void loadEvent();
-  }, [slug]);
+  }, [slug, toast]);
 
   const registrationRoute = useMemo(
     () => (slug ? toEventRegistrationConfirmRoute(slug) : APP_ROUTES.EVENTS),
@@ -61,6 +73,11 @@ const PublicEventDetailPage = () => {
     }
 
     if (!isAuthenticated || !user) {
+      toast.info({
+        title: "Sign In Required",
+        message: "Sign in with a player account to register for this event.",
+        dedupeKey: `public-event-auth-required:${slug}`,
+      });
       navigate(APP_ROUTES.SIGN_IN, { state: { redirectTo: registrationRoute } });
       return;
     }

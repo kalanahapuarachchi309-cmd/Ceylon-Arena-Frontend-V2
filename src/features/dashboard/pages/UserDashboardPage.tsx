@@ -133,6 +133,42 @@ const UserDashboardPage = () => {
   const combinedError = actionError ?? teamError ?? registrationsError ?? paymentsError ?? null;
   const isLoading = isTeamLoading || isRegistrationsLoading || isPaymentsLoading;
 
+  useEffect(() => {
+    if (!teamError) {
+      return;
+    }
+
+    toast.error({
+      title: "Team Load Failed",
+      message: teamError,
+      dedupeKey: `dashboard-team-load:${teamError}`,
+    });
+  }, [teamError, toast]);
+
+  useEffect(() => {
+    if (!registrationsError) {
+      return;
+    }
+
+    toast.error({
+      title: "Registration Load Failed",
+      message: registrationsError,
+      dedupeKey: `dashboard-registrations-load:${registrationsError}`,
+    });
+  }, [registrationsError, toast]);
+
+  useEffect(() => {
+    if (!paymentsError) {
+      return;
+    }
+
+    toast.error({
+      title: "Payments Load Failed",
+      message: paymentsError,
+      dedupeKey: `dashboard-payments-load:${paymentsError}`,
+    });
+  }, [paymentsError, toast]);
+
   const handleTeamFormChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     setTeamForm((previous) => ({ ...previous, [name]: value }));
@@ -157,7 +193,12 @@ const UserDashboardPage = () => {
       toast.success("Team information updated.");
       setIsTeamModalOpen(false);
     } catch {
-      setActionError("Unable to update team information.");
+      const message = "Unable to update team information.";
+      setActionError(message);
+      toast.error({
+        title: "Team Update Failed",
+        message,
+      });
     } finally {
       setIsSavingTeam(false);
     }
@@ -168,11 +209,23 @@ const UserDashboardPage = () => {
     setActionError(null);
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setActionError("Password confirmation does not match.");
+      const message = "Password confirmation does not match.";
+      setActionError(message);
+      toast.warning({
+        title: "Validation Error",
+        message,
+        dedupeKey: "dashboard-password-mismatch",
+      });
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      setActionError("New password must contain at least 8 characters.");
+      const message = "New password must contain at least 8 characters.";
+      setActionError(message);
+      toast.warning({
+        title: "Validation Error",
+        message,
+        dedupeKey: "dashboard-password-length",
+      });
       return;
     }
 
@@ -186,9 +239,33 @@ const UserDashboardPage = () => {
       setPasswordForm(defaultPasswordFormState);
       setIsPasswordModalOpen(false);
     } catch {
-      setActionError("Unable to change password.");
+      const message = "Unable to change password.";
+      setActionError(message);
+      toast.error({
+        title: "Password Change Failed",
+        message,
+      });
     } finally {
       setIsSavingPassword(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.info({
+        title: "Signed Out",
+        message: "You have been signed out.",
+        dedupeKey: "dashboard-logout-success",
+      });
+    } catch {
+      toast.warning({
+        title: "Signed Out Locally",
+        message: "Session cleared, but sign-out confirmation failed.",
+        dedupeKey: "dashboard-logout-fallback",
+      });
+    } finally {
+      navigate(APP_ROUTES.HOME);
     }
   };
 
@@ -255,7 +332,7 @@ const UserDashboardPage = () => {
               </button>
               <button
                 className="logout-btn"
-                onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}
+                onClick={() => void handleLogout()}
               >
                 Logout
               </button>

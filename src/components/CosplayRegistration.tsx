@@ -4,6 +4,7 @@ import logoImg from '../assets/image/web_Site_logo/Ceylon_Arena_Logo_CMYK-01.png
 import freefireImg from '../assets/image/Freefire.jpeg';
 import pubgImg from '../assets/image/pubg-mobile.jpg';
 import codImg from '../assets/image/call-of-duty.webp';
+import { useToast } from '../shared/providers/CustomToastProvider';
 import './CosplayRegistration.css';
 
 const GAMES = [
@@ -14,6 +15,7 @@ const GAMES = [
 
 export default function CosplayRegistration() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [form, setForm] = useState({ name: '', age: '', game: '' });
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors]   = useState<{ name?: string; age?: string; game?: string }>({});
@@ -41,9 +43,22 @@ export default function CosplayRegistration() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setErrors(errs);
+      toast.warning({
+        title: 'Validation Required',
+        message: 'Please complete all required cosplay fields before submitting.',
+        dedupeKey: 'cosplay-registration-validation',
+      });
+      return;
+    }
     setErrors({});
     setSubmitted(true);
+    toast.success({
+      title: 'Cosplay Registered',
+      message: `Welcome ${form.name}. Your ${form.game || 'selected'} category registration is saved.`,
+      dedupeKey: `cosplay-registration-success:${form.name}:${form.game}`,
+    });
   };
 
   const handleChange = (field: keyof typeof form, value: string) => {

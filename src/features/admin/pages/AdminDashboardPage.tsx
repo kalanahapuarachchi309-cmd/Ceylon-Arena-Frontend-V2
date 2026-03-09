@@ -162,11 +162,17 @@ const AdminDashboardPage = () => {
           await loadPayments();
         }
       } catch (loadError) {
-        setError(getErrorMessage(loadError));
+        const message = getErrorMessage(loadError);
+        setError(message);
+        toast.error({
+          title: "Admin Data Load Failed",
+          message,
+          dedupeKey: `admin-tab-load:${tab}:${message}`,
+        });
       }
     };
     void loadTabData();
-  }, [tab]);
+  }, [tab, toast]);
 
   useEffect(() => {
     const loadDetails = async () => {
@@ -186,7 +192,13 @@ const AdminDashboardPage = () => {
           setSelectedTeam(null);
         }
       } catch (loadError) {
-        setError(getErrorMessage(loadError));
+        const message = getErrorMessage(loadError);
+        setError(message);
+        toast.error({
+          title: "Detail Load Failed",
+          message,
+          dedupeKey: `admin-detail-load:${message}`,
+        });
       }
     };
     void loadDetails();
@@ -194,6 +206,7 @@ const AdminDashboardPage = () => {
     legacyTeamDetailMatch?.params.id,
     legacyUserDetailMatch?.params.id,
     teamDetailMatch?.params.id,
+    toast,
     userDetailMatch?.params.id,
   ]);
 
@@ -365,6 +378,25 @@ const AdminDashboardPage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.info({
+        title: "Signed Out",
+        message: "Admin session ended successfully.",
+        dedupeKey: "admin-logout-success",
+      });
+    } catch {
+      toast.warning({
+        title: "Signed Out Locally",
+        message: "Session cleared, but server sign-out confirmation failed.",
+        dedupeKey: "admin-logout-fallback",
+      });
+    } finally {
+      navigate(APP_ROUTES.HOME);
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <div className="admin-header">
@@ -372,7 +404,7 @@ const AdminDashboardPage = () => {
         <div className="admin-title-section">
           <h1 className="admin-title">ADMIN CONTROL CENTER</h1>
         </div>
-        <button className="btn-back-to-home" onClick={() => void logout().then(() => navigate(APP_ROUTES.HOME))}>Logout</button>
+        <button className="btn-back-to-home" onClick={() => void handleLogout()}>Logout</button>
       </div>
 
       <div className="admin-nav">
@@ -491,7 +523,7 @@ const AdminDashboardPage = () => {
               </select>
             </div>
             <table className="admin-table">
-              <thead><tr><th>Event</th><th>Team / Leader</th><th>Amount / Method</th><th>Payment Status</th><th>Reg Status</th><th>Transaction / Bank</th><th>Action</th></tr></thead>
+              <thead><tr><th>Event</th><th>Team / Leader</th><th>Promo Code</th><th>Amount / Method</th><th>Payment Status</th><th>Reg Status</th><th>Transaction / Bank</th><th>Action</th></tr></thead>
               <tbody>{payments.filter((item) => {
                 if (selectedEventFilter === 'all') return true;
                 const paymentData = item as any;
@@ -555,7 +587,7 @@ const AdminDashboardPage = () => {
                     default:
                       return '#e0e0e0';
                   }
-                };
+                };                
                 
                 return (
                   <tr key={id || String(item.registrationId)}>
@@ -566,6 +598,13 @@ const AdminDashboardPage = () => {
                     <td>
                       <div>{String(teamName)}</div>
                       <div style={{ fontSize: '0.8em', color: '#a0a0a0', marginTop: '4px' }}>{String(leaderName)}</div>
+                    </td>
+                    <td>
+                      <div style={{ color: '#00ffff', fontWeight: '500' }}>
+                        {typeof paymentData.leaderId === 'object' && paymentData.leaderId !== null 
+                          ? paymentData.leaderId.promoCode || '-'
+                          : '-'}
+                      </div>
                     </td>
                     <td>
                       <div>Rs {item.amount || 0}</div>
@@ -579,7 +618,7 @@ const AdminDashboardPage = () => {
                     </td>
                     <td>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button className="action-btn" disabled={!item.slipUrl && !item.slipFilePath} onClick={() => setSlipViewerUrl(item.slipUrl || item.slipFilePath || null)}>Slip</button>
+                        <button className="action-btn" disabled={!item.slipUrl && !item.slipFilePath} onClick={() => setSlipViewerUrl(item.slipUrl || item.slipFilePath || null)}>📄 Slip</button>
                         <button 
                           className="action-btn" 
                           style={{ background: 'linear-gradient(135deg, #667eea, #764ba2)', color: '#fff' }}

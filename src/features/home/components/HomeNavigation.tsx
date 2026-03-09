@@ -10,6 +10,7 @@ import {
   type LandingNavigationAction,
 } from "../config/navigation";
 import { APP_ROUTES } from "../../../shared/constants/routes";
+import { useToast } from "../../../shared/providers/CustomToastProvider";
 import { UserRole } from "../../../shared/types";
 
 interface HomeNavigationProps {
@@ -33,6 +34,7 @@ const HomeNavigation = ({
   onCosplay,
 }: HomeNavigationProps) => {
   const navigate = useNavigate();
+  const toast = useToast();
   const {
     user,
     teamSummary,
@@ -94,9 +96,23 @@ const HomeNavigation = ({
   };
 
   const handleLogout = async () => {
-    await logout();
-    navigate(APP_ROUTES.HOME);
-    onCloseMenu();
+    try {
+      await logout();
+      toast.info({
+        title: "Signed Out",
+        message: "You have been signed out successfully.",
+        dedupeKey: "auth-logout-success",
+      });
+    } catch {
+      toast.warning({
+        title: "Signed Out Locally",
+        message: "Session was cleared, but we could not confirm sign out with the server.",
+        dedupeKey: "auth-logout-local-only",
+      });
+    } finally {
+      navigate(APP_ROUTES.HOME);
+      onCloseMenu();
+    }
   };
 
   const handleAction = async (item: LandingNavigationAction) => {

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/hooks/useAuth";
@@ -37,8 +37,25 @@ const LiveEventsSection = () => {
 
   const visibleEvents = useMemo(() => events, [events]);
 
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    toast.error({
+      title: "Events Load Failed",
+      message: error,
+      dedupeKey: `home-live-events-load:${error}`,
+    });
+  }, [error, toast]);
+
   const handleEventOpen = (slug?: string, eventId?: string | null) => {
     if (!slug) {
+      toast.warning({
+        title: "Unavailable Event",
+        message: "This event is missing a route identifier.",
+        dedupeKey: "home-live-events-missing-slug",
+      });
       return;
     }
     navigate(toEventRoute(slug), {
@@ -54,6 +71,11 @@ const LiveEventsSection = () => {
     const targetPath = toEventRegistrationConfirmRoute(slug);
 
     if (isBootstrapping || !isAuthenticated || !user) {
+      toast.info({
+        title: "Sign In Required",
+        message: "Please sign in with a player account to register.",
+        dedupeKey: `home-live-events-auth-required:${slug}`,
+      });
       navigate(APP_ROUTES.SIGN_IN, { state: { redirectTo: targetPath } });
       return;
     }

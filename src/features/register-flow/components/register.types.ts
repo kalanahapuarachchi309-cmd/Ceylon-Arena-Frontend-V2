@@ -6,6 +6,7 @@ export interface RegistrationFormValues {
   fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
   phone: string;
   address: string;
   promoCode: string;
@@ -43,6 +44,7 @@ export const defaultRegistrationFormValues: RegistrationFormValues = {
   fullName: "",
   email: "",
   password: "",
+  confirmPassword: "",
   phone: "",
   address: "",
   promoCode: "",

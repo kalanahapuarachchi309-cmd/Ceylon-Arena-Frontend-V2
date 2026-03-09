@@ -1,4 +1,5 @@
-import type { ChangeEvent, FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { Eye, EyeOff } from "lucide-react";
 
 import type { RegistrationFormValues } from "./register.types";
 
@@ -18,20 +19,28 @@ const RegistrationFormView = ({
   onCancel,
   onSubmit,
   onInputChange,
-}: RegistrationFormViewProps) => (
-  <div className="registration-form-container">
-    <div className="selected-game-header">
-      <button className="btn-back" onClick={onCancel} disabled={loading}>
-        Cancel
-      </button>
-    </div>
+}: RegistrationFormViewProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword((prev) => !prev);
+  };
+
+  return (
+  <div className="registration-form-container">
     <form className="registration-form" onSubmit={onSubmit}>
       <div className="form-section">
         <h3 className="form-section-title">Personal Information</h3>
 
         <div className="form-group">
-          <label htmlFor="fullName">Team Leader Name *</label>
+          <label htmlFor="fullName" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Team Leader Name *
+          </label>
           <input
             type="text"
             id="fullName"
@@ -41,12 +50,15 @@ const RegistrationFormView = ({
             placeholder="Enter your full name"
             aria-invalid={Boolean(fieldErrors.fullName)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.fullName ? <p className="form-inline-error">{fieldErrors.fullName}</p> : null}
         </div>
 
         <div className="form-group">
-          <label htmlFor="email">Email Address *</label>
+          <label htmlFor="email" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Email Address *
+          </label>
           <input
             type="email"
             id="email"
@@ -56,27 +68,73 @@ const RegistrationFormView = ({
             placeholder="your.email@example.com"
             aria-invalid={Boolean(fieldErrors.email)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.email ? <p className="form-inline-error">{fieldErrors.email}</p> : null}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="password">Password *</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={onInputChange}
-            placeholder="Enter your password"
-            aria-invalid={Boolean(fieldErrors.password)}
-            required
-          />
-          {fieldErrors.password ? <p className="form-inline-error">{fieldErrors.password}</p> : null}
+        <div className="form-row-two-col">
+          <div className="form-group">
+            <label htmlFor="password" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Password *
+            </label>
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={onInputChange}
+                placeholder="Enter your password"
+                aria-invalid={Boolean(fieldErrors.password)}
+                required
+                style={{ fontSize: '1rem', padding: '12px 16px' }}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={togglePasswordVisibility}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {fieldErrors.password ? <p className="form-inline-error">{fieldErrors.password}</p> : null}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Confirm Password *
+            </label>
+            <div className="password-input-wrapper">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={onInputChange}
+                placeholder="Confirm your password"
+                aria-invalid={Boolean(fieldErrors.confirmPassword)}
+                required
+                style={{ fontSize: '1rem', padding: '12px 16px' }}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={toggleConfirmPasswordVisibility}
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {fieldErrors.confirmPassword ? <p className="form-inline-error">{fieldErrors.confirmPassword}</p> : null}
+          </div>
         </div>
 
         <div className="form-group">
-          <label htmlFor="phone">WhatsApp Number *</label>
+          <label htmlFor="phone" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            WhatsApp Number *
+          </label>
           <input
             type="tel"
             id="phone"
@@ -86,12 +144,15 @@ const RegistrationFormView = ({
             placeholder="+94771234567"
             aria-invalid={Boolean(fieldErrors.phone)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.phone ? <p className="form-inline-error">{fieldErrors.phone}</p> : null}
         </div>
 
         <div className="form-group">
-          <label htmlFor="address">Address *</label>
+          <label htmlFor="address" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Address *
+          </label>
           <input
             type="text"
             id="address"
@@ -101,12 +162,15 @@ const RegistrationFormView = ({
             placeholder="Enter your address"
             aria-invalid={Boolean(fieldErrors.address)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.address ? <p className="form-inline-error">{fieldErrors.address}</p> : null}
         </div>
 
         <div className="form-group">
-          <label htmlFor="promoCode">Promo Code (Optional)</label>
+          <label htmlFor="promoCode" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Promo Code (Optional)
+          </label>
           <input
             type="text"
             id="promoCode"
@@ -114,11 +178,14 @@ const RegistrationFormView = ({
             value={formData.promoCode}
             onChange={onInputChange}
             placeholder="Enter promo code"
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="leaderInGameId">Leader In-Game ID *</label>
+          <label htmlFor="leaderInGameId" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Leader In-Game ID *
+          </label>
           <input
             type="text"
             id="leaderInGameId"
@@ -128,6 +195,7 @@ const RegistrationFormView = ({
             placeholder="Enter leader in-game id"
             aria-invalid={Boolean(fieldErrors.leaderInGameId)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.leaderInGameId ? <p className="form-inline-error">{fieldErrors.leaderInGameId}</p> : null}
         </div>
@@ -137,7 +205,9 @@ const RegistrationFormView = ({
         <h3 className="form-section-title">Team Information</h3>
 
         <div className="form-group">
-          <label htmlFor="teamName">Team Name *</label>
+          <label htmlFor="teamName" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Team Name *
+          </label>
           <input
             type="text"
             id="teamName"
@@ -147,12 +217,15 @@ const RegistrationFormView = ({
             placeholder="Enter your team name"
             aria-invalid={Boolean(fieldErrors.teamName)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.teamName ? <p className="form-inline-error">{fieldErrors.teamName}</p> : null}
         </div>
 
         <div className="form-group">
-          <label htmlFor="primaryGame">Primary Game *</label>
+          <label htmlFor="primaryGame" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+            Primary Game *
+          </label>
           <input
             type="text"
             id="primaryGame"
@@ -162,6 +235,7 @@ const RegistrationFormView = ({
             placeholder="Enter team primary game"
             aria-invalid={Boolean(fieldErrors.primaryGame)}
             required
+            style={{ fontSize: '1rem', padding: '12px 16px' }}
           />
           {fieldErrors.primaryGame ? <p className="form-inline-error">{fieldErrors.primaryGame}</p> : null}
         </div>
@@ -172,7 +246,9 @@ const RegistrationFormView = ({
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="member1Name">Player 2 Name *</label>
+            <label htmlFor="member1Name" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 2 Name *
+            </label>
             <input
               type="text"
               id="member1Name"
@@ -182,12 +258,15 @@ const RegistrationFormView = ({
               placeholder="Enter player 2 name"
               aria-invalid={Boolean(fieldErrors.member1Name)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member1Name ? <p className="form-inline-error">{fieldErrors.member1Name}</p> : null}
           </div>
 
           <div className="form-group">
-            <label htmlFor="member1InGameId">Player 2 In-Game ID *</label>
+            <label htmlFor="member1InGameId" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 2 In-Game ID *
+            </label>
             <input
               type="text"
               id="member1InGameId"
@@ -197,6 +276,7 @@ const RegistrationFormView = ({
               placeholder="Enter player 2 in-game id"
               aria-invalid={Boolean(fieldErrors.member1InGameId)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member1InGameId ? (
               <p className="form-inline-error">{fieldErrors.member1InGameId}</p>
@@ -206,7 +286,9 @@ const RegistrationFormView = ({
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="member2Name">Player 3 Name *</label>
+            <label htmlFor="member2Name" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 3 Name *
+            </label>
             <input
               type="text"
               id="member2Name"
@@ -216,12 +298,15 @@ const RegistrationFormView = ({
               placeholder="Enter player 3 name"
               aria-invalid={Boolean(fieldErrors.member2Name)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member2Name ? <p className="form-inline-error">{fieldErrors.member2Name}</p> : null}
           </div>
 
           <div className="form-group">
-            <label htmlFor="member2InGameId">Player 3 In-Game ID *</label>
+            <label htmlFor="member2InGameId" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 3 In-Game ID *
+            </label>
             <input
               type="text"
               id="member2InGameId"
@@ -231,6 +316,7 @@ const RegistrationFormView = ({
               placeholder="Enter player 3 in-game id"
               aria-invalid={Boolean(fieldErrors.member2InGameId)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member2InGameId ? (
               <p className="form-inline-error">{fieldErrors.member2InGameId}</p>
@@ -240,7 +326,9 @@ const RegistrationFormView = ({
 
         <div className="form-row-two-col">
           <div className="form-group">
-            <label htmlFor="member3Name">Player 4 Name *</label>
+            <label htmlFor="member3Name" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 4 Name *
+            </label>
             <input
               type="text"
               id="member3Name"
@@ -250,12 +338,15 @@ const RegistrationFormView = ({
               placeholder="Enter player 4 name"
               aria-invalid={Boolean(fieldErrors.member3Name)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member3Name ? <p className="form-inline-error">{fieldErrors.member3Name}</p> : null}
           </div>
 
           <div className="form-group">
-            <label htmlFor="member3InGameId">Player 4 In-Game ID *</label>
+            <label htmlFor="member3InGameId" style={{ fontSize: '1.05rem', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+              Player 4 In-Game ID *
+            </label>
             <input
               type="text"
               id="member3InGameId"
@@ -265,6 +356,7 @@ const RegistrationFormView = ({
               placeholder="Enter player 4 in-game id"
               aria-invalid={Boolean(fieldErrors.member3InGameId)}
               required
+              style={{ fontSize: '1rem', padding: '12px 16px' }}
             />
             {fieldErrors.member3InGameId ? (
               <p className="form-inline-error">{fieldErrors.member3InGameId}</p>
@@ -274,10 +366,21 @@ const RegistrationFormView = ({
       </div>
 
       <div className="form-actions">
-        <button type="submit" className="btn btn-submit" disabled={loading}>
+        <button 
+          type="submit" 
+          className="btn btn-submit" 
+          disabled={loading}
+          style={{ fontSize: '1.1rem', padding: '14px 28px', fontWeight: '600', letterSpacing: '0.5px' }}
+        >
           {loading ? "Creating Account..." : "Complete Registration"}
         </button>
-        <button type="button" className="btn btn-cancel" onClick={onCancel} disabled={loading}>
+        <button 
+          type="button" 
+          className="btn btn-cancel" 
+          onClick={onCancel} 
+          disabled={loading}
+          style={{ fontSize: '1rem', padding: '12px 24px', fontWeight: '500' }}
+        >
           Cancel
         </button>
       </div>
@@ -302,6 +405,7 @@ const RegistrationFormView = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 export default RegistrationFormView;

@@ -22,6 +22,7 @@ import {
   setStoredUser,
   type AuthTeamSummary,
 } from "../shared/lib/storage";
+import { toast } from "../shared/toast";
 import type {
   AuthSession,
   AuthUser,
@@ -214,8 +215,17 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      const hasRestorableSession = Boolean(getAccessToken() || getStoredUser());
       clearSessionState();
       setIsBootstrapping(false);
+      if (hasRestorableSession) {
+        toast.warning({
+          title: "Session Expired",
+          message: "Your session has expired. Please sign in again.",
+          duration: 6000,
+          dedupeKey: "auth-session-expired",
+        });
+      }
     };
 
     window.addEventListener("auth:unauthorized", handleUnauthorized);

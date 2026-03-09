@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import AuthErrorMessage from "../../auth/components/AuthErrorMessage";
 import { useAuth } from "../../auth/hooks/useAuth";
+import HomeNavigation from "../../home/components/HomeNavigation";
 import RegistrationFormView from "../components/RegistrationFormView";
 import {
   defaultRegistrationFormValues,
@@ -22,6 +23,7 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof RegistrationFormValues, string>>>({});
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const validateForm = (values: RegistrationFormValues) => {
     const errors: Partial<Record<keyof RegistrationFormValues, string>> = {};
@@ -34,6 +36,9 @@ const RegisterPage = () => {
     }
     if (values.password.length < 8) {
       errors.password = "Password must be at least 8 characters.";
+    }
+    if (values.confirmPassword !== values.password) {
+      errors.confirmPassword = "Passwords do not match.";
     }
     if (values.phone.trim().length < 9) {
       errors.phone = "Enter a valid phone number.";
@@ -154,16 +159,21 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="register-page">
-      <div className="register-container">
-        <button className="btn-home-nav" onClick={() => navigate(APP_ROUTES.HOME)}>
-          Back to Home
-        </button>
-
-        <h1 className="register-title">
-          <span className="gradient-text">Team Registration</span>
-        </h1>
-        <p className="register-subtitle">Create your leader account and team</p>
+    <>
+      <HomeNavigation
+        mobileMenuOpen={mobileMenuOpen}
+        onToggleMenu={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onCloseMenu={() => setMobileMenuOpen(false)}
+        showSectionLinks={false}
+      />
+      <div className="register-page">
+        <div className="register-container">
+          <h1 className="register-title" style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>
+            <span className="gradient-text">Team Registration</span>
+          </h1>
+          <p className="register-subtitle" style={{ fontSize: '1.1rem', lineHeight: '1.6', marginBottom: '1rem', opacity: 0.9 }}>
+            Create your leader account and team
+          </p>
 
         <AuthErrorMessage message={errorMessage} />
 
@@ -177,6 +187,7 @@ const RegisterPage = () => {
         />
       </div>
     </div>
+    </>
   );
 };
 

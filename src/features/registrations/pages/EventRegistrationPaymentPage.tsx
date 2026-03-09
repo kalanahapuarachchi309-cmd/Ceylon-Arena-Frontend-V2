@@ -46,6 +46,11 @@ const defaultPaymentForm: PaymentFormState = {
   slip: null,
 };
 
+const MAX_SLIP_SIZE_BYTES = 8 * 1024 * 1024;
+const BANK_ACCOUNT_NAME = "Symphony Event LK";
+const BANK_ACCOUNT_NUMBER = "8023860717";
+const BANK_ACCOUNT_BANK = "Commercial Bank Anuradhapura";
+
 const EventRegistrationPaymentPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -78,7 +83,13 @@ const EventRegistrationPaymentPage = () => {
   useEffect(() => {
     const loadPageData = async () => {
       if (!slug) {
-        setErrorMessage("Event slug is missing.");
+        const message = "Event slug is missing.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Payment Setup Failed",
+          message,
+          dedupeKey: "event-payment-missing-slug",
+        });
         setIsLoading(false);
         return;
       }
@@ -121,7 +132,13 @@ const EventRegistrationPaymentPage = () => {
 
         setRegistration(matchingRegistration);
       } catch {
-        setErrorMessage("Unable to load payment submission details.");
+        const message = "Unable to load payment submission details.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Payment Setup Failed",
+          message,
+          dedupeKey: "event-payment-load-failed",
+        });
       } finally {
         setIsLoading(false);
       }
@@ -134,21 +151,89 @@ const EventRegistrationPaymentPage = () => {
     navigationState.team,
     registrationIdFromQuery,
     slug,
+    toast,
   ]);
 
   const handleFieldChange = (eventValue: ChangeEvent<HTMLInputElement>) => {
     const { name, value, files } = eventValue.target;
     if (name === "slip") {
-      setPaymentForm((previous) => ({ ...previous, slip: files?.[0] ?? null }));
+      const selectedFile = files?.[0] ?? null;
+      if (!selectedFile) {
+        setPaymentForm((previous) => ({ ...previous, slip: null }));
+        return;
+      }
+
+      if (!selectedFile.type.startsWith("image/")) {
+        const message = "Invalid file type. Upload an image file for the payment slip.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Upload Failed",
+          message,
+          dedupeKey: "event-payment-invalid-slip-type",
+        });
+        setPaymentForm((previous) => ({ ...previous, slip: null }));
+        return;
+      }
+
+      if (selectedFile.size > MAX_SLIP_SIZE_BYTES) {
+        const message = "Payment slip is too large. Maximum allowed size is 8 MB.";
+        setErrorMessage(message);
+        toast.error({
+          title: "Upload Failed",
+          message,
+          dedupeKey: "event-payment-invalid-slip-size",
+        });
+        setPaymentForm((previous) => ({ ...previous, slip: null }));
+        return;
+      }
+
+      setErrorMessage(null);
+      setPaymentForm((previous) => ({ ...previous, slip: selectedFile }));
+      toast.success({
+        title: "Slip Added",
+        message: `${selectedFile.name} is ready for submission.`,
+        dedupeKey: `event-payment-slip-selected:${selectedFile.name}:${selectedFile.size}`,
+      });
       return;
     }
     setPaymentForm((previous) => ({ ...previous, [name]: value }));
   };
 
+  const handleCopyToClipboard = async (value: string, label: string) => {
+    if (!navigator?.clipboard?.writeText) {
+      toast.error({
+        title: "Copy Unavailable",
+        message: "Clipboard is not supported in this browser.",
+        dedupeKey: `event-payment-copy-unsupported:${label}`,
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success({
+        title: "Copied",
+        message: `${label} copied to clipboard.`,
+        dedupeKey: `event-payment-copy-success:${label}`,
+      });
+    } catch {
+      toast.error({
+        title: "Copy Failed",
+        message: `Unable to copy ${label.toLowerCase()}.`,
+        dedupeKey: `event-payment-copy-failed:${label}`,
+      });
+    }
+  };
+
   const handleSubmitPayment = async (eventValue: FormEvent<HTMLFormElement>) => {
     eventValue.preventDefault();
     if (!registrationId) {
-      setErrorMessage("Registration id is missing. Please confirm event registration again.");
+      const message = "Registration id is missing. Please confirm event registration again.";
+      setErrorMessage(message);
+      toast.error({
+        title: "Payment Submission Failed",
+        message,
+      });
       return;
     }
 
@@ -158,9 +243,13 @@ const EventRegistrationPaymentPage = () => {
       !paymentForm.bankName ||
       !paymentForm.accountHolder
     ) {
-      setErrorMessage(
-        "Please provide transaction reference, bank name, account holder and payment slip."
-      );
+      const message = "Please provide transaction reference, bank name, account holder and payment slip.";
+      setErrorMessage(message);
+      toast.warning({
+        title: "Missing Payment Details",
+        message,
+        dedupeKey: "event-payment-missing-fields",
+      });
       return;
     }
 
@@ -173,12 +262,18 @@ const EventRegistrationPaymentPage = () => {
         bankName: paymentForm.bankName,
         accountHolder: paymentForm.accountHolder,
       });
-      toast.success("Payment submitted successfully.");
+      toast.success({
+        title: "Payment Submitted",
+        message: "Payment submitted successfully.",
+      });
       navigate(APP_ROUTES.PLAYER_DASHBOARD_EVENTS, { replace: true });
     } catch (error) {
       const normalizedError = normalizeApiError(error);
       setErrorMessage(normalizedError.message);
-      toast.error(normalizedError.message);
+      toast.error({
+        title: "Payment Submission Failed",
+        message: normalizedError.message,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -279,17 +374,25 @@ const EventRegistrationPaymentPage = () => {
 
                       <div className="form-group">
                         <label>Account Name</label>
-                        <input value="Symphony Event LK" readOnly />
+                        <input value={BANK_ACCOUNT_NAME} readOnly />
                       </div>
 
                       <div className="form-group">
                         <label>Account Number</label>
-                        <input value="8023860717" readOnly />
+                        <input value={BANK_ACCOUNT_NUMBER} readOnly />
+                        <button
+                          type="button"
+                          className="btn btn-cancel"
+                          style={{ marginTop: "10px" }}
+                          onClick={() => void handleCopyToClipboard(BANK_ACCOUNT_NUMBER, "Account number")}
+                        >
+                          Copy Account Number
+                        </button>
                       </div>
 
                       <div className="form-group">
                         <label>Bank Name</label>
-                        <input value="Commercial Bank Anuradhapura" readOnly />
+                        <input value={BANK_ACCOUNT_BANK} readOnly />
                       </div>
 
                       <div className="payment-note-box">
