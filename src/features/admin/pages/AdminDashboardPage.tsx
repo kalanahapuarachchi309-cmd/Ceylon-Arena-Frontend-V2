@@ -95,7 +95,7 @@ const AdminDashboardPage = () => {
   const teamDetailMatch = useMatch(APP_ROUTES.ADMIN_TEAM_DETAILS);
   const legacyUserDetailMatch = useMatch("/admin/users/:id");
   const legacyTeamDetailMatch = useMatch("/admin/teams/:id");
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
   const [users, setUsers] = useState<UserEntity[]>([]);
   const [teams, setTeams] = useState<TeamEntity[]>([]);
