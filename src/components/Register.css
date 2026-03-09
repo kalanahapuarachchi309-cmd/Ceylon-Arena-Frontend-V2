@@ -577,6 +577,14 @@
   color: #666;
 }
 
+.form-inline-error {
+  margin-top: 8px;
+  color: #ff6b9f;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  text-transform: none;
+}
+
 .form-group select {
   cursor: pointer;
 }
