@@ -13,6 +13,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import UnauthorizedPage from "../features/auth/pages/UnauthorizedPage";
 import AdminDashboardPage from "../features/admin/pages/AdminDashboardPage";
 import UserDashboardPage from "../features/dashboard/pages/UserDashboardPage";
+import EventsListPage from "../features/events/pages/EventsListPage";
 import PublicEventDetailPage from "../features/events/pages/PublicEventDetailPage";
 import HomePage from "../features/home/pages/HomePage";
 import NotFoundPage from "../features/home/pages/NotFoundPage";
@@ -26,7 +27,7 @@ const AppRoutes = () => (
   <Routes>
     <Route element={<PublicLayout />}>
       <Route path={APP_ROUTES.HOME} element={<HomePage />} />
-      <Route path={APP_ROUTES.EVENTS} element={<HomePage />} />
+      <Route path={APP_ROUTES.EVENTS} element={<EventsListPage />} />
       <Route path={APP_ROUTES.EVENT_DETAILS} element={<PublicEventDetailPage />} />
       <Route path={APP_ROUTES.COSPLAY} element={<CosplayRegistrationPage />} />
       <Route path={APP_ROUTES.PAYMENT} element={<PaymentPage />} />
@@ -42,6 +43,7 @@ const AppRoutes = () => (
     </Route>
 
     <Route element={<PlayerRoute />}>
+      <Route path={APP_ROUTES.EVENT_REGISTER} element={<Navigate to={APP_ROUTES.EVENTS} replace />} />
       <Route path={APP_ROUTES.EVENT_REGISTER_CONFIRM} element={<EventRegistrationConfirmPage />} />
       <Route path={APP_ROUTES.EVENT_REGISTER_PAYMENT} element={<EventRegistrationPaymentPage />} />
 

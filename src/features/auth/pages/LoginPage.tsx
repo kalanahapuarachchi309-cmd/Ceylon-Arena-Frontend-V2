@@ -151,7 +151,9 @@ const LoginPage = () => {
             loading={loading}
             onSubmit={handleSubmit}
             onChange={handleInputChange}
-            onGoRegister={() => navigate(APP_ROUTES.REGISTER)}
+            onGoRegister={() => navigate(APP_ROUTES.REGISTER, { 
+              state: redirectTo ? { redirectTo } : undefined 
+            })}
           />
         </div>
       </div>

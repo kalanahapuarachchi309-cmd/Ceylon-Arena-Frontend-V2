@@ -11,6 +11,7 @@ import {
 } from "../components/register.types";
 import { APP_ROUTES } from "../../../shared/constants/routes";
 import { useToast } from "../../../shared/providers/CustomToastProvider";
+import { UserRole } from "../../../shared/types";
 import { getErrorMessage } from "../../../shared/utils/errorHandler";
 
 import "../../../components/Register.css";
@@ -108,7 +109,7 @@ const RegisterPage = () => {
         return;
       }
 
-      await register({
+      const session = await register({
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
@@ -136,14 +137,17 @@ const RegisterPage = () => {
 
       setFormData(defaultRegistrationFormValues);
       setFieldErrors({});
-      toast.success("Team registration completed. Please sign in.");
-      navigate(APP_ROUTES.SIGN_IN, {
-        replace: true,
-        state: {
-          registered: true,
-          registeredEmail: formData.email,
-        },
-      });
+
+      // Redirect based on user role after successful registration
+      if (session.user.role === UserRole.ADMIN) {
+        toast.success("Registration completed.");
+        navigate(APP_ROUTES.ADMIN_DASHBOARD, { replace: true });
+        return;
+      }
+
+      // For regular players, continue directly to event listing.
+      toast.success("Team registration completed. Continue with event selection.");
+      navigate(APP_ROUTES.EVENTS, { replace: true });
     } catch (submitError) {
       const message = getErrorMessage(submitError);
       setErrorMessage(message);
@@ -175,18 +179,18 @@ const RegisterPage = () => {
             Create your leader account and team
           </p>
 
-        <AuthErrorMessage message={errorMessage} />
+          <AuthErrorMessage message={errorMessage} />
 
-        <RegistrationFormView
-          formData={formData}
-          fieldErrors={fieldErrors}
-          loading={loading}
-          onCancel={handleCancel}
-          onSubmit={handleSubmit}
-          onInputChange={handleInputChange}
-        />
+          <RegistrationFormView
+            formData={formData}
+            fieldErrors={fieldErrors}
+            loading={loading}
+            onCancel={handleCancel}
+            onSubmit={handleSubmit}
+            onInputChange={handleInputChange}
+          />
+        </div>
       </div>
-    </div>
     </>
   );
 };

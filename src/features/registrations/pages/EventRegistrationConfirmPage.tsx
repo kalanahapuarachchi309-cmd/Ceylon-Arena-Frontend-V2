@@ -85,15 +85,14 @@ const EventRegistrationConfirmPage = () => {
     return (
       registrations.find((registration) => {
         const nestedEventId = resolveEntityId(registration.event);
-        return (
-          registration.eventId === targetEventId || nestedEventId === targetEventId
-        );
+        return registration.eventId === targetEventId || nestedEventId === targetEventId;
       }) ?? null
     );
   };
 
   const navigateToPayment = (registration: RegistrationEntity) => {
-    if (!slug) {
+    if (!event?.slug) {
+      setErrorMessage("Event information is missing.");
       return;
     }
 
@@ -103,7 +102,7 @@ const EventRegistrationConfirmPage = () => {
       return;
     }
 
-    const paymentRoute = `${toEventRegistrationPaymentRoute(slug)}?registrationId=${registrationId}`;
+    const paymentRoute = `${toEventRegistrationPaymentRoute(event.slug)}?registrationId=${registrationId}`;
     navigate(paymentRoute, {
       state: {
         registrationId,
@@ -197,10 +196,6 @@ const EventRegistrationConfirmPage = () => {
       <div className="register-page">
         <LoadingOverlay isVisible={isLoading} message="Loading event confirmation..." />
         <div className="register-container">
-          <button className="btn-home-nav" onClick={() => navigate(APP_ROUTES.EVENTS)}>
-            Back to Events
-          </button>
-
           <h1 className="register-title">
             <span className="gradient-text">Confirm Event Registration</span>
           </h1>
@@ -213,7 +208,7 @@ const EventRegistrationConfirmPage = () => {
           {!isLoading && event ? (
             <div className="registration-form-container">
               <div className="registration-form">
-                <CustomFormSection title="Event Details">
+                <CustomFormSection title="Selected Event Details">
                   <div className="form-group">
                     <label>Event</label>
                     <input value={event.title} readOnly />
@@ -275,7 +270,7 @@ const EventRegistrationConfirmPage = () => {
                     isLoading={isSubmitting}
                     loadingLabel="Creating Registration..."
                     onClick={() => void handleProceedToPayment()}
-                    disabled={!team}
+                    disabled={!team || !eventId}
                   >
                     Proceed to Payment
                   </ButtonLoadingState>
@@ -287,6 +282,12 @@ const EventRegistrationConfirmPage = () => {
                     Go to Profile
                   </button>
                 </div>
+              </div>
+            </div>
+          ) : !isLoading ? (
+            <div className="registration-form-container">
+              <div className="registration-form">
+                <p className="register-subtitle">Event details are unavailable for confirmation.</p>
               </div>
             </div>
           ) : null}

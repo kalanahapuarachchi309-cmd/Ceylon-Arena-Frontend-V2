@@ -2,9 +2,9 @@ import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../../auth/hooks/useAuth";
+import EventCard from "../../events/components/EventCard";
 import { usePublicEvents } from "../../events/hooks/useEvents";
 import { useToast } from "../../../shared/providers/CustomToastProvider";
-import { formatDate } from "../../../shared/lib/date";
 import { resolveEntityId } from "../../../shared/api/apiTypes";
 import {
   APP_ROUTES,
@@ -12,22 +12,6 @@ import {
   toEventRoute,
 } from "../../../shared/constants/routes";
 import { UserRole } from "../../../shared/types";
-
-const formatDateParts = (value?: string) => {
-  if (!value) {
-    return { day: "--", month: "---" };
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return { day: "--", month: "---" };
-  }
-
-  return {
-    day: String(date.getDate()).padStart(2, "0"),
-    month: date.toLocaleDateString(undefined, { month: "short" }).toUpperCase(),
-  };
-};
 
 const LiveEventsSection = () => {
   const navigate = useNavigate();
@@ -119,33 +103,14 @@ const LiveEventsSection = () => {
           ) : (
             visibleEvents.map((event) => {
               const eventId = resolveEntityId(event);
-              const eventDate = formatDateParts(event.eventStartAt || event.registrationOpenAt);
               return (
-                <div className="event-card" key={eventId || event.slug}>
-                  <div className="event-date">
-                    <span className="date-day">{eventDate.day}</span>
-                    <span className="date-month">{eventDate.month}</span>
-                  </div>
-                  <div className="event-info">
-                    <h3 style={{ cursor: "pointer" }} onClick={() => handleEventOpen(event.slug)}>
-                      {event.title}
-                    </h3>
-                    <p>
-                      {event.gameName} | {event.currency} {event.entryFee} | {event.maxTeams} Teams
-                    </p>
-                    <div className="event-tags">
-                      <span className="tag">{event.status}</span>
-                      <span className="tag">{formatDate(event.registrationCloseAt)}</span>
-                    </div>
-                  </div>
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleEventRegister(event.slug)}
-                    disabled={!event.slug}
-                  >
-                    Register
-                  </button>
-                </div>
+                <EventCard
+                  key={eventId || event.slug}
+                  event={event}
+                  onTitleClick={() => handleEventOpen(event.slug, eventId)}
+                  onAction={() => handleEventRegister(event.slug)}
+                  actionDisabled={!event.slug}
+                />
               );
             })
           )}

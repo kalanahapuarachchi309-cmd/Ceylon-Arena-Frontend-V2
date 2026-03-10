@@ -41,7 +41,7 @@ export interface AuthContextValue {
   isInitializing: boolean;
   isBootstrapping: boolean;
   login: (payload: LoginRequest) => Promise<AuthSession>;
-  register: (payload: RegisterRequest) => Promise<void>;
+  register: (payload: RegisterRequest) => Promise<AuthSession>;
   logout: () => Promise<void>;
   logoutAll: () => Promise<void>;
   restoreSession: () => Promise<void>;
@@ -119,9 +119,20 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
   const isMountedRef = useRef<boolean>(true);
   const teamSummaryPromiseRef = useRef<Promise<void> | null>(null);
 
-  const applySession = useCallback((session: AuthSession) => {
+  const applySession = useCallback((session: AuthSession, options?: { teamName?: string }) => {
     persistSession(session);
     setUser(session.user);
+
+    if (session.user.role === UserRole.PLAYER && options?.teamName) {
+      const summary: AuthTeamSummary = {
+        ownerId: session.user.id,
+        teamName: options.teamName,
+      };
+      setStoredTeamSummary(summary);
+      setTeamSummary(summary);
+      return;
+    }
+
     removeStoredTeamSummary();
     setTeamSummary(null);
   }, []);
@@ -241,9 +252,14 @@ export const AuthProvider = ({ children }: PropsWithChildren) => {
     [applySession]
   );
 
-  const register = useCallback(async (payload: RegisterRequest) => {
-    await authApi.register(payload);
-  }, []);
+  const register = useCallback(
+    async (payload: RegisterRequest) => {
+      const registration = await authApi.register(payload);
+      applySession(registration.session, { teamName: registration.teamName });
+      return registration.session;
+    },
+    [applySession]
+  );
 
   const logout = useCallback(async () => {
     try {

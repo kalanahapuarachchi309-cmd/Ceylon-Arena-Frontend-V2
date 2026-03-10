@@ -4,6 +4,11 @@ import type { AuthSession, AuthUser, ChangePasswordRequest, LoginRequest, Regist
 
 type UnknownRecord = Record<string, unknown>;
 
+interface RegisterResult {
+  session: AuthSession;
+  teamName?: string;
+}
+
 const isRecord = (value: unknown): value is UnknownRecord =>
   typeof value === "object" && value !== null;
 
@@ -102,9 +107,24 @@ const extractUser = (payload: unknown): AuthUser => {
   return normalizeAuthUser(payload);
 };
 
+const extractTeamName = (payload: unknown): string | undefined => {
+  const data = isRecord(payload) && isRecord(payload.data) ? payload.data : payload;
+  if (!isRecord(data) || !isRecord(data.team)) {
+    return undefined;
+  }
+
+  return typeof data.team.teamName === "string" ? data.team.teamName : undefined;
+};
+
 export const authApi = {
-  async register(payload: RegisterRequest): Promise<void> {
-    await axiosInstance.post("/auth/register", payload);
+  async register(payload: RegisterRequest): Promise<RegisterResult> {
+    const response = await axiosInstance.post("/auth/register", payload);
+    const normalizedPayload = unwrapApiEnvelope(response.data);
+
+    return {
+      session: extractSession(normalizedPayload),
+      teamName: extractTeamName(normalizedPayload),
+    };
   },
 
   async login(payload: LoginRequest): Promise<AuthSession> {

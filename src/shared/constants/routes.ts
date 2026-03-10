@@ -8,6 +8,7 @@ export const APP_ROUTES = {
   SETTINGS: "/settings",
   CHANGE_PASSWORD: "/change-password",
   EVENTS: "/events",
+  EVENT_REGISTER: "/events/register",
   EVENT_DETAILS: "/events/:slug",
   EVENT_REGISTER_CONFIRM: "/events/:slug/register/confirm",
   EVENT_REGISTER_PAYMENT: "/events/:slug/register/payment",
