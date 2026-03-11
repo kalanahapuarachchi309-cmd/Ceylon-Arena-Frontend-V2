@@ -144,6 +144,9 @@ const AdminDashboardPage = () => {
   const loadRegistrations = async () => setRegistrations(await registrationsApi.getRegistrations({ page: 1, limit: 100 }));
   const loadPayments = async () => setPayments(await paymentsApi.getPayments({ page: 1, limit: 100 }));
 
+  console.log(payments);
+  
+
   useEffect(() => {
     const loadTabData = async () => {
       try {
@@ -456,10 +459,14 @@ const AdminDashboardPage = () => {
 
         {tab === "teams" && (
           <table className="admin-table">
-            <thead><tr><th>Team</th><th>Game</th><th>Leader</th><th>Active</th><th>Action</th></tr></thead>
+            <thead><tr><th>Team</th><th>Game</th><th>Leader</th><th>Phone</th><th>Active</th><th>Action</th></tr></thead>
             <tbody>{teams.map((item) => {
               const id = resolveEntityId(item);
-              return <tr key={id || item.teamName}><td>{item.teamName}</td><td>{item.primaryGame}</td><td>{item.leaderInGameId}</td><td>{String(item.isActive ?? false)}</td><td><button className="action-btn" disabled={!id} onClick={() => id && navigate(toAdminTeamDetailsRoute(id))}>View</button></td></tr>;
+              const teamData = item as any;
+              const leaderPhone = typeof teamData.leaderId === 'object' && teamData.leaderId !== null 
+                ? teamData.leaderId.phone || '-'
+                : '-';
+              return <tr key={id || item.teamName}><td>{item.teamName}</td><td>{item.primaryGame}</td><td>{item.leaderInGameId}</td><td style={{ color: '#a0e0ff', fontWeight: '500' }}>{leaderPhone}</td><td>{String(item.isActive ?? false)}</td><td><button className="action-btn" disabled={!id} onClick={() => id && navigate(toAdminTeamDetailsRoute(id))}>View</button></td></tr>;
             })}</tbody>
           </table>
         )}
@@ -523,7 +530,7 @@ const AdminDashboardPage = () => {
               </select>
             </div>
             <table className="admin-table">
-              <thead><tr><th>Event</th><th>Team / Leader</th><th>Promo Code</th><th>Amount / Method</th><th>Payment Status</th><th>Reg Status</th><th>Transaction / Bank</th><th>Action</th></tr></thead>
+              <thead><tr><th>Event</th><th>Team / Leader</th><th>Phone</th><th>Promo Code</th><th>Amount / Method</th><th>Payment Status</th><th>Reg Status</th><th>Transaction / Bank</th><th>Action</th></tr></thead>
               <tbody>{payments.filter((item) => {
                 if (selectedEventFilter === 'all') return true;
                 const paymentData = item as any;
@@ -533,7 +540,7 @@ const AdminDashboardPage = () => {
                 return eventId === selectedEventFilter;
               }).map((item) => {
                 const id = resolveEntityId(item);
-                const paymentData = item as any; // Cast to any to access backend populated fields
+                const paymentData = item as any; // Cast to any to access backend populated fields               
                 const registrationId = typeof paymentData.registrationId === 'object' && paymentData.registrationId !== null 
                   ? resolveEntityId(paymentData.registrationId) 
                   : item.registrationId;
@@ -598,6 +605,13 @@ const AdminDashboardPage = () => {
                     <td>
                       <div>{String(teamName)}</div>
                       <div style={{ fontSize: '0.8em', color: '#a0a0a0', marginTop: '4px' }}>{String(leaderName)}</div>
+                    </td>
+                    <td>
+                      <div style={{ color: '#a0e0ff', fontWeight: '500' }}>
+                        {typeof paymentData.leaderId === 'object' && paymentData.leaderId !== null 
+                          ? paymentData.leaderId.phone || '-'
+                          : '-'}
+                      </div>
                     </td>
                     <td>
                       <div style={{ color: '#00ffff', fontWeight: '500' }}>
