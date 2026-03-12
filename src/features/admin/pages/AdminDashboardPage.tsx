@@ -434,12 +434,12 @@ const AdminDashboardPage = () => {
 
         {tab === "users" && (
           <table className="admin-table">
-            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Action</th></tr></thead>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Active</th><th>Phone</th><th>Action</th></tr></thead>
             <tbody>{users.map((item) => {
               const id = resolveEntityId(item);
               return (
               <tr key={id || item.email}>
-                <td>{item.fullName || item.playerName}</td><td>{item.email}</td><td>{item.role}</td><td>{String(item.isActive ?? item.status ?? false)}</td>
+                <td>{item.fullName || item.playerName}</td><td>{item.email}</td><td>{item.role}</td><td>{String(item.isActive ?? item.status ?? false)}</td><td style={{ color: '#a0e0ff', fontWeight: '500' }}>{item.phone || '-'}</td>
                 <td>
                   <button className="action-btn" disabled={!id} onClick={() => id && navigate(toAdminUserDetailsRoute(id))}>View</button>
                   <button className="action-btn" disabled={!id} onClick={() => id && handleRoleChange(id, item.role)}>Toggle Role</button>
